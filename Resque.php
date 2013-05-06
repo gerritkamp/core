@@ -143,19 +143,29 @@ class Core_Resque
   /**
    * Create a new job and save it to the specified queue.
    *
-   * @param string $queue The name of the queue to place the job in.
-   * @param string $class The name of the class that contains the code to execute the job.
-   * @param array $args Any optional arguments that should be passed when the job is executed.
+   * @param string  $type        The name of the queue to place the job in.
+   * @param string  $class       Optional. The class that contains the code to execute the job.
+   * @param array   $args        Any optional arguments that should be passed to the job.
    * @param boolean $trackStatus Set to true to be able to monitor the status of a job.
    *
    * @return string
    */
-  public static function enqueue($queue, $class, $args = null, $trackStatus = false)
+  public static function enqueue($type, $class = null, $args = null, $trackStatus = false)
   {
-    $result = Resque_Job::create($queue, $class, $args, $trackStatus);
+    $queue     = $type;
+    $className = 'Core_Job';
+    switch ($type) {
+      case 'mail':
+        $queue = 'mail';
+        break;
+      default:
+        $className = $class;
+        break;
+    }
+    $result = Resque_Job::create($queue, $className, $args, $trackStatus);
     if ($result) {
       Resque_Event::trigger('afterEnqueue', array(
-        'class' => $class,
+        'class' => $className,
         'args'  => $args,
         'queue' => $queue,
       ));

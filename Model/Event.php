@@ -23,7 +23,7 @@ class Core_Model_Event extends Core_Model
     array("id", "int(10) unsigned", "NO", "PRI", "", "auto_increment"),
     array("crdate", "int(10) unsigned", "NO", "", "0", ""),
     array("person_id", "int(10) unsigned", "NO", "MUL", "0", ""),
-    array("event_type_id", "int(10) unsigned", "NO", "MUL", "0", ""),
+    array("event_type", "varchar(64)", "NO", "MUL", "", ""),
     array("params", "text", "YES", "", "", "")
   );
 

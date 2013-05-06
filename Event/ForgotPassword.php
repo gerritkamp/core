@@ -15,10 +15,10 @@
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
-class Core_Event_ForgotPassword
+class Core_Event_ForgotPassword implements Core_Event_Interface
 {
 
-  protected function _processEvent($email)
+  public function processEvent($email)
   {
     // check if valid email address
     $filter = new Core_Filter_Email();
@@ -34,10 +34,7 @@ class Core_Event_ForgotPassword
       return false;
     }
     // store event in db
-    // store kpi
-    // send email
-    // store internal
-    // store audittrail
+    // do email, internal, kpi, audit-trail as part of jobqueue
   }
 
 }
