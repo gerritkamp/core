@@ -68,10 +68,59 @@ class Core_Model_User extends Core_Model_Person
     }
   }
 
-  public function getUserByEmail($email)
+  /**
+   * Method to get a user by an email address
+   *
+   * @param  string  $email           The email address
+   * @param  boolean $includePassword Include sensitive data such as passwords?
+   *
+   * @return mixed array with userdata or false if none found
+   */
+  public function getUserByEmail($email, $includePassword=false)
   {
     $this->_logger->info(__METHOD__);
-   /*$select = $this->_readDb->select()
-      ->from('core_')*/
+    $db = $this->_readDb;
+    $select = $db->select()
+       ->from(array('ep' => 'core_email_person'))
+       ->joinLeft(array('u' => 'core_user'),
+          'u.person_id = ep.person_id')
+       ->where('ep.email = ?', $email);
+    $results = $db->query($select)->fetchAll();
+    if (!empty($results[0]['person_id'])) {
+      // filter out sensitive data if need be
+      if (!$includePassword) {
+        unset($results[0]['password']);
+        unset($results[0]['usersalt']);
+      }
+      return $results[0];
+    } else {
+      return false;
+    }
   }
+
+  /**
+   * Method to reset the user token
+   *
+   * @param  integer $userId The user ID
+   *
+   * @return string The user token, or false upon error
+   */
+  public function resetToken($userId)
+  {
+    $this->_logger->info(__METHOD__);
+    $userId = (int)$userId;
+    $time = time();
+    $random = mt_rand(0, 999999);
+    $newToken = sha1($time.$random.$userId);
+    $db = $this->_writeDb;
+    $data = array('token' => $token);
+    $n = $db->update($this->_tableName, $data, 'id='.$userId);
+    if ($n) {
+      return $newToken;
+    } else {
+      $this->_logger->warn(__METHOD__.' failed to reset token for user with id: '.$userId);
+      return false;
+    }
+  }
+
 }

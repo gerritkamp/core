@@ -45,10 +45,15 @@ class Core_Job_ForgotPassword
       $this->_logger->err(__METHOD__.' Email is missing');
     }
 
-    // reset usertoken
     // send email
-    // store kpi/audit/internal?
+    $type    = 'forgot_password';
+    $to      = array('email' => $args['email']);
+    $params  = $args['params'];
+    $subject = 'Reset password';
+    $email   = new Core_Email();
+    $email->sendEmail($type, $to, $params, $subject);
 
+    // store kpi/audit/internal?
   }
 
 }

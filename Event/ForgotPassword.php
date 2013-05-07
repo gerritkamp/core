@@ -18,7 +18,15 @@
 class Core_Event_ForgotPassword implements Core_Event_Interface
 {
 
-  public function processEvent($email)
+  /**
+   * Method to process the event
+   *
+   * @param  integer $fromPersonId The person who caused the event
+   * @param  array   $params       Submitted params
+   *
+   * @return mixed false upon error, array with params upon success
+   */
+  public function processEvent($fromPersonId, $params)
   {
     // check if valid email address
     $filter = new Core_Filter_Email();
@@ -27,14 +35,25 @@ class Core_Event_ForgotPassword implements Core_Event_Interface
     if ($validator->isValid($email)) {
       // check if user exists
       $userModel = new Core_Model_User();
+      $userData = $userModel->getUserByEmail($email);
       // if so, reset token
-      // send reset password email with reset link
+      if (!empty($userData['id'])) {
+        $newToken = $userModel->resetToken($userData['id']);
+        if (empty($newToken)) {
+          $this->_logger->warn(__METHOD__.' forgot password with unknown email: '.$email);
+          return false;
+        }
+      } else {
+        $this->_logger->warn(__METHOD__.' forgot password with unknown email: '.$email);
+        return false;
+      }
     } else {
       $this->_logger->warn(__METHOD__.' forgot password with invalid email: '.$email);
       return false;
     }
-    // store event in db
-    // do email, internal, kpi, audit-trail as part of jobqueue
+
+    // all ok, return params
+    return array('token' => $newToken, 'person_id' => $userData['id']);
   }
 
 }

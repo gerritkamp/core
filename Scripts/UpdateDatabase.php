@@ -18,10 +18,10 @@
 class Core_Scripts_UpdateDatabase extends Core_Scripts
 {
 
-  public function executeScript()
+  public function executeScript($params)
   {
     $database = new Core_Database();
-    $result = $database->updateDatabase();
+    $result = $database->updateDatabase(true);
     if ($result) {
       return ' Database updated!';
     } else {

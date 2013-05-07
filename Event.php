@@ -31,15 +31,65 @@ class Core_Event
   );
 
   /**
-   * Constructor
+   * @var Logger
    */
-  public function __construct($type, $fromPersonId, $params=array())
+  protected $_logger;
+
+  /**
+   * @var The event class
+   */
+  protected $_eventClass = null;
+
+  /**
+   * Constructor
+   *
+   * @param $type The event type
+   */
+  public function __construct($type, $library='Core');
   {
+    $this->_logger = Zend_Registry::get('logger');
+    $this->_logger->info(__METHOD__);
     if (in_array($type, $this->_eventTypes)) {
-      //store the event in the database
-      $eventData = $this->storeEvent($type, $fromPersonId, $params);
-      // all other processing is done by workers
-      $this->saveJob($type, $eventData);
+
+      // create the event class
+      $aName = explode('_', $type);
+      $className = $library.'_Event_';
+      foreach ($aName as $part) {
+        $className.= ucfirst($part);
+      }
+      $this->_eventClass = new $className();
+    }
+  }
+
+  /**
+   * Method to process the event
+   *
+   * @param  integer $fromPersonId The person causing the event
+   * @param  array   $params       Submitted params
+   *
+   * @return array Default status array
+   */
+  public function processEvent($fromPersonId=0, $params=array())
+  {
+    $this->_logger->info(__METHOD__);
+    if (in_array($type, $this->_eventTypes)) {
+      // process the main event
+      $params = $this->_eventClass->processEvent($fromPersonId, $params);
+      if (empty($fromPersonId) && !empty($params['from_person_id'])) {
+        // sometimes we get the from person only while processing event (forgot password, login)
+        $fromPersonId = $params['from_person_id'];
+      }
+
+      if (is_array($params)) {
+        //store the event in the database
+        $eventData = $this->storeEvent($type, $fromPersonId, $params);
+
+        // all other processing is done by workers
+        $this->saveJob($type, $eventData);
+        return array('status' => 'success');
+      } else {
+        return array('status' => 'error', 'message' => 'Could not process event');
+      }
     }
   }
 
@@ -53,6 +103,7 @@ class Core_Event
    */
   public function storeEvent($type, $fromPersonId = 0, $params = array())
   {
+    $this->_logger->info(__METHOD__);
     // stores event in db
     $eventParams = array(
       'person_id'  => $fromPersonId,
@@ -60,7 +111,10 @@ class Core_Event
       'params'     => json_encode($params)
     );
     $eventModel = new Core_Model_Event();
-    return $eventModel->insertNewRecord($eventParams);
+    $eventData = $eventModel->insertNewRecord($eventParams);
+    $eventData['params'] = $params;
+    $eventData['from_person_id'] = $fromPersonId;
+    return $eventData;
   }
 
   /**
@@ -71,8 +125,9 @@ class Core_Event
    */
   public function saveJob($type, $args)
   {
+    $this->_logger->info(__METHOD__);
     // calls jobqueue to process event
-    Resque::enqueue($type, 'Core_Job', $eventData);
+    Resque::enqueue($type, 'Core_Job', $args);
   }
 
 }
