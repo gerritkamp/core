@@ -15,7 +15,7 @@
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
-class Core_Event_ForgotPassword implements Core_Event_Interface
+class Core_Event_ForgotPassword extends Core_Event_Abstract implements Core_Event_Interface
 {
 
   /**
@@ -26,12 +26,17 @@ class Core_Event_ForgotPassword implements Core_Event_Interface
    *
    * @return mixed false upon error, array with params upon success
    */
-  public function processEvent($fromPersonId, $params)
+  public function processEvent($fromPersonId=0, $params=array())
   {
+    if (empty($params['email'])) {
+      $this->_logger->warn(__METHOD__.' forgot password without email');
+      return false;
+    }
     // check if valid email address
+    $email = $params['email'];
     $filter = new Core_Filter_Email();
     $email = $filter->filter($email);
-    $validator = new Zend_Validate_Email();
+    $validator = new Zend_Validate_EmailAddress();
     if ($validator->isValid($email)) {
       // check if user exists
       $userModel = new Core_Model_User();
@@ -53,7 +58,7 @@ class Core_Event_ForgotPassword implements Core_Event_Interface
     }
 
     // all ok, return params
-    return array('token' => $newToken, 'person_id' => $userData['id']);
+    return array('token' => $newToken, 'from_person_id' => $userData['id']);
   }
 
 }

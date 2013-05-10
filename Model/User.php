@@ -44,8 +44,13 @@ class Core_Model_User extends Core_Model_Person
     $this->_logger->info(__METHOD__);
     $db = $this->_readDb;
     $select = $db->select()
-       ->from($this->_userTable)
-       ->where('person_id = ?', $userId);
+       ->from(array('u' => 'core_user'))
+       ->joinLeft(array('p' => 'core_person'),
+          'u.id = p.id')
+       ->joinLeft(array('ep' => 'core_email_person'),
+          'u.id = ep.person_id')
+       ->where('u.id = ?', $userId)
+       ->where('ep.default = 1');
     $results = $db->query($select)->fetchAll();
     $this->_logger->debug(__METHOD__.' results: '.print_r($results, true));
     if (!empty($results[0]['person_id'])) {
@@ -83,7 +88,7 @@ class Core_Model_User extends Core_Model_Person
     $select = $db->select()
        ->from(array('ep' => 'core_email_person'))
        ->joinLeft(array('u' => 'core_user'),
-          'u.person_id = ep.person_id')
+          'u.id = ep.person_id')
        ->where('ep.email = ?', $email);
     $results = $db->query($select)->fetchAll();
     if (!empty($results[0]['person_id'])) {
@@ -92,6 +97,27 @@ class Core_Model_User extends Core_Model_Person
         unset($results[0]['password']);
         unset($results[0]['usersalt']);
       }
+      return $results[0];
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Method to get basic user details through the user token
+   *
+   * @param  string $token The user token
+   *
+   * @return array with user data (incl password + salt!) or false if none found
+   */
+  public function getUserByToken($token)
+  {
+    $this->_logger->info(__METHOD__);
+    $select = $this->_readDb->select()
+       ->from(array('u' => 'core_user'))
+       ->where('u.token = ?', $token);
+    $results = $db->query($select)->fetchAll();
+    if (isset($results[0]['id'])) {
       return $results[0];
     } else {
       return false;
@@ -111,12 +137,12 @@ class Core_Model_User extends Core_Model_Person
     $userId = (int)$userId;
     $time = time();
     $random = mt_rand(0, 999999);
-    $newToken = sha1($time.$random.$userId);
+    $token = sha1($time.$random.$userId);
     $db = $this->_writeDb;
     $data = array('token' => $token);
     $n = $db->update($this->_tableName, $data, 'id='.$userId);
     if ($n) {
-      return $newToken;
+      return $token;
     } else {
       $this->_logger->warn(__METHOD__.' failed to reset token for user with id: '.$userId);
       return false;

@@ -16,8 +16,15 @@
  */
 interface Core_Event_Interface
 {
+
   /**
    * Method to process the event
+   *
+   * @param  integer $fromPersonId The person who caused the event
+   * @param  array   $params       Submitted params
+   *
+   * @return mixed false upon error, array with params upon success
    */
-  public function processEvent()
+  public function processEvent($fromPersonId=0, $params=array());
+
 }

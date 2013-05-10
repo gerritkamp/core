@@ -47,6 +47,22 @@ class Core_Controller_Action extends Zend_Controller_Action
 
     // set the logger
     $this->_logger = Zend_Registry::get('logger');
+
+    // check for flash message
+    if (!empty($this->_session->flashMessage)) {
+      $this->view->flashMessage = $this->_session->flashMessage;
+      $this->_session->flashMessage = null;
+    }
+  }
+
+  /**
+   * Method to set a flash message
+   *
+   * @param string $message The message
+   */
+  public function setFlashMessage($message)
+  {
+    $this->_session->flashMessage = $message;
   }
 
 }

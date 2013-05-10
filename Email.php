@@ -46,7 +46,8 @@ class Core_Email
   public function sendEmail($type, $to, $params, $subject, $from=array(), $bulk=false)
   {
     $this->_logger->info(__METHOD__);
-    $params['host_url'] = $this->_config->host_url;
+    $this->_logger->debug(__METHOD__.' to: '.print_r($to, true));
+    $params['host_url'] = $this->_config->app->host_url;
     if (!$bulk) {
       if (isset($to['name']) && isset($to['email'])) {
         $newTo[0] = $to;  // set into single item array format
@@ -57,13 +58,14 @@ class Core_Email
     }
     if (empty($from)) {
       $from = array(
-        $this->_config->email->from->email,
-        $this->_config->email->from->name
+        'email' => $this->_config->email->from->email,
+        'name' => $this->_config->email->from->name
       );
     }
+    $this->_logger->debug(__METHOD__.' to: '.print_r($to, true));
     // filter test emails
     $to = $this->_checkTestEmail($to);
-    if (!empty($to)) {
+    if (empty($to)) {
       $this->_logger->notice(__METHOD__.' to: empty, all test-users??');
       return false;
     }
@@ -97,7 +99,16 @@ class Core_Email
     // itself will need to be called multiple times
     $mail = new Zend_Mail();
     $mail->setSubject($subject);
-    $mail->setFrom($from);
+    if (!empty($from['email']) && !empty($from['name'])) {
+        $mail->setFrom($from['email'], $from['name']);
+      } elseif (!empty($from['email'])) {
+        $mail->setFrom($from['email']);
+      } elseif (is_string($from)) {
+        $mail->setFrom($from);
+      } else {
+        $this->_logger->err(__METHOD__.' could not set from: '.print_r($from, true));
+        return false;
+      }
     // send all emails with the same body
     if ($bulk) {
       $mail->setBodyHtml($this->_createBody($type, $params));
@@ -107,7 +118,16 @@ class Core_Email
       foreach ($to as $user) {
         // create unique body per user
         $mail->setBodyHtml($this->_createBody($type, $params));
-        $mail->addTo($user);
+        if (!empty($user['email']) && !empty($user['name'])) {
+          $mail->addTo($user['email'], $user['name']);
+        } elseif (!empty($user['email'])) {
+          $mail->addTo($user['email']);
+        } elseif (is_string($user)) {
+          $mail->addTo($user);
+        } else {
+          $this->_logger->err(__METHOD__.' could not send to : '.print_r($user, true));
+          return false;
+        }
         $mail->send();
         // clear the recipient
         $mail->clearRecipients();
@@ -167,6 +187,7 @@ class Core_Email
   protected function _createBody($type, $params)
   {
     $this->_logger->info(__METHOD__);
+    //$this->_logger->debug(__METHOD__.' params: '.print_r($params, true));
     // create view
     $html = new Zend_View();
     $html->setScriptPath(APPLICATION_PATH.'/views/emails/');
@@ -178,6 +199,7 @@ class Core_Email
     $body = $html->render('_header.phtml');
     $body.= $html->render($template);
     $body.= $html->render('_footer.phtml');
+    //$this->_logger->debug(__METHOD__.' body: '.print_r($body, true));
     return $body;
   }
 

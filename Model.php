@@ -162,6 +162,40 @@ class Core_Model extends Zend_Db_Table_Abstract
         return array_merge($insertData);
       }
     }
-
   }
+
+  /**
+   * Method to update a record
+   *
+   * @param  integer $id     The record id
+   * @param  array   $params The record params
+   *
+   * @return boolean, true upon success, false otherwise
+   */
+  public function updateRecord($id, $params)
+  {
+    $tableName = $this->getTableName();
+    if ($tableName) { // only if class has tablename
+      // filter out the fields that are not relevant
+      $fieldNames = $this->getTableFieldNames();
+      foreach ($params as $key => $value) {
+        if (in_array($key, $fieldNames)) {
+          $updateData[$key] = $value;
+        }
+      }
+      if (!empty($updateData)) {
+        $this->_writeDb->update($tableName, $updateData, 'id='.(int)$id);
+      }
+      // and now also update parents, recursively
+      $parentName = $this->getParentTableName();
+      if (!empty($parentName)) {
+        $parentClassName = get_parent_class($this);
+        $parentClass = new $parentClassName();
+        $parentData = $parentClass->updateRecord($id, $params);
+      }
+      return true;
+    }
+    return false;
+  }
+
 }

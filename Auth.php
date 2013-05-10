@@ -25,11 +25,16 @@ class Core_Auth
   protected $_sessionNamespace = 'core';
 
   /**
+   * @var Logger
+   */
+  protected $_logger;
+
+  /**
    * Constructor
    */
   public function __construct()
   {
-
+    $this->_logger = Zend_Registry::get('logger');
   }
 
   public function logout()
@@ -37,7 +42,7 @@ class Core_Auth
     // kill the session and direct user back to home
   }
 
-  public function register()
+  protected function _register()
   {
     // register a new user
   }
@@ -50,7 +55,7 @@ class Core_Auth
    *
    * @return boolean Whether the user was successfully logged-in or not
    */
-  public function login($userId)
+  protected function _login($userId)
   {
     // get user roles and set them in the session
     // get user data and set it in the session

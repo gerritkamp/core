@@ -1,8 +1,7 @@
 <?php
 
 /**
- * Job, manages asynchrounous jobs. Implements Core_Job_Interface which contains the
- * perform method.
+ * Job, manages asynchrounous jobs. Creates and destroys specific job objects
  *
  * @category   Core
  * @package    Core_Job
@@ -16,13 +15,23 @@
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
-class Core_Job implements Core_Job_Interface
+class Core_Job
 {
 
   /**
    * @var Core job object
    */
   protected $_object = null;
+
+  /**
+   * @var Job arguments
+   */
+  protected $args = array();
+
+  /**
+   * @var Job queue name
+   */
+  protected $queue = null;
 
   /**
    * Method to setup object
@@ -40,6 +49,16 @@ class Core_Job implements Core_Job_Interface
       $className.= ucfirst($part);
     }
     $this->_object = new $className();
+  }
+
+  /**
+   * Performs the job
+   *
+   * @return None
+   */
+  public function perform()
+  {
+    $this->_object->perform($this->args);
   }
 
   /**

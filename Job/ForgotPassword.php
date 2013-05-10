@@ -1,6 +1,6 @@
 <?php
 /**
- * Job to process a forgotten password
+ * Job to process a forgotten password.
  *
  * @category   Core
  * @package    Core_Job
@@ -14,46 +14,45 @@
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
-class Core_Job_ForgotPassword
+class Core_Job_ForgotPassword extends Core_Job_Abstract implements Core_Job_Interface
 {
 
   /**
-   * @var Logger
+   * @var array with params that need to be provided, and values for testing
    */
-  protected $_logger;
-
-  /**
-   * Constructor
-   */
-  public function __construct()
-  {
-    $this->_logger = Zend_Registry::get('logger');
-  }
+  protected $_params = array(
+    'event_id' => 1,
+    'from_person_id' => 1,
+    'token' => 'aabbcc'
+  );
 
   /**
    * Method to perform the job
    */
-  public function perform()
+  public function perform($args=array())
   {
-    // check for needed and valid params
-    if (empty($this->args)) {
-      $this->_logger->err(__METHOD__.' no args found for job');
-    }
+    $argsOk = $this->_checkArgs($args);
 
-    $args = $this->args;
-    if (empty($args['email'])) {
-      $this->_logger->err(__METHOD__.' Email is missing');
-    }
-
-    // send email
-    $type    = 'forgot_password';
-    $to      = array('email' => $args['email']);
-    $params  = $args['params'];
-    $subject = 'Reset password';
-    $email   = new Core_Email();
-    $email->sendEmail($type, $to, $params, $subject);
+    if ($argsOk) {
+      // process job
+      // send email
+      $userModel = new Core_Model_User();
+      $userData = $userModel->getUserById($args['from_person_id']);
+      $type    = 'forgot_password';
+      $to      = array(
+        'email' => $userData['email'],
+        'name'  => $userData['first_name'].' '.$userData['last_name']
+      );
+      $args['reset_link'] = 'login/resetpassword/resethash/'.$userData['token'];
+      $params  = $args;
+      $subject = 'Reset password';
+      $email   = new Core_Email();
+      $email->sendEmail($type, $to, $params, $subject);
 
     // store kpi/audit/internal?
+    } else {
+      // burry job
+    }
   }
 
 }

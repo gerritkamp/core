@@ -1,25 +1,34 @@
 <?php
+
 /**
- * Interface that all jobs should implement.
+ * Abstract event
  *
  * @category   Core
- * @package    Core_Job
+ * @package    Core_Event
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
 
 /**
  * @category   Core
- * @package    Core_Job
+ * @package    Core_Event
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
-interface Core_Job_Interface
+class Core_Event_Abstract
 {
+
   /**
-   * Method to perform the job
-   *
-   * @param $args Array with job arguments
+   * @var Logger
    */
-  public function perform($args=array());
+  protected $_logger;
+
+  /**
+   * Constructor
+   */
+  public function __construct()
+  {
+    $this->_logger = Zend_Registry::get('logger');
+  }
+
 }
