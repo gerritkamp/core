@@ -18,11 +18,9 @@
 class Core_Auth
 {
   /**
-   * Session namespace, something you probably want to override in applications
-   *
-   * @var string
+   * @var Zend_Session
    */
-  protected $_sessionNamespace = 'core';
+  protected $_session = null;
 
   /**
    * @var Logger
@@ -34,12 +32,23 @@ class Core_Auth
    */
   public function __construct()
   {
-    $this->_logger = Zend_Registry::get('logger');
+    $this->_logger  = Zend_Registry::get('logger');
+    $this->_session = Zend_Registry::get('session');
   }
 
+  /**
+   * Method to log a user out
+   *
+   * @return boolean true
+   */
   public function logout()
   {
-    // kill the session and direct user back to home
+    $this->_logger->info(__METHOD__);
+    $event = new Core_Event('logout');
+    $this->_session->userRoles = null;
+    $this->_session->userData  = null;
+    $this->_session->userId    = null;
+    return true;
   }
 
   protected function _register()
@@ -57,8 +66,19 @@ class Core_Auth
    */
   protected function _login($userId)
   {
+    $this->_logger->info(__METHOD__);
     // get user roles and set them in the session
+    $userRoleModel = new Core_Model_UserRole();
+    $roles = $userRoleModel->getUserRoles($userId);
+    $this->_logger->debug(__METHOD__.' roles: '.print_r($roles, true));
+    $this->_session->userRoles = $roles;
     // get user data and set it in the session
+    $userModel = new Core_Model_User();
+    $userData = $userModel->getUserById($userId);
+    $this->_logger->debug(__METHOD__.' userData: '.print_r($userData, true));
+    $this->_session->userData = $userData;
+    $this->_session->userId = $userId;
     // return true
+    return true;
   }
 }

@@ -34,11 +34,13 @@ class Core_Database
   /**
    * Method to update a database based on the model definitions
    *
-   * @param  boolean $exec Should the statements be executed or just be generated and returned?
+   * @param boolean $exec        Should the statements be executed or just generated?
+   * @param boolean $reset       Should datbabase be reset?
+   * @param boolean $returnError Should error messages be returned?
    *
    * @return mixed false upon failure, array with sql statements on success
    */
-  public function updateDatabase($exec=false)
+  public function updateDatabase($exec=false, $reset=false, $returnError)
   {
     $this->_logger->info(__METHOD__);
     // check for tables in database that are not defined
@@ -51,8 +53,17 @@ class Core_Database
         $this->_existingTables[] = $tableName;
       }
     }
-    // for each model in each library that has models
     $results = array();
+
+    // reset database if required
+    if ($reset) {
+      foreach ($this->_existingTables as $tableName) {
+        $results['reset'][$tableName] = $this->dropTable($tableName, $exec);
+      }
+      $this->_existingTables = array();
+    }
+
+    // for each model in each library that has models
     $definedTables = array();
     try {
       $libPath = ROOT_PATH.'/library';
@@ -88,7 +99,11 @@ class Core_Database
       }
     } catch (Exception $e) {
       $this->_logger->err(__METHOD__.' error: '.$e->getMessage());
-      return false;
+      if ($returnError) {
+        return $e->getMessage();
+      } else {
+        return false;
+      }
     }
     return $results;
   }
@@ -164,10 +179,10 @@ class Core_Database
         $sql.= $this->addIndexSql($tableName, $field[0], $field[3]);
       }
     }
+    $this->_logger->debug(__METHOD__.' sql: '.$sql);
     if ($exec) {
       $this->_writeDb->getConnection()->exec($sql);
     }
-    $this->_logger->debug(__METHOD__.' sql: '.$sql);
     return $sql;
   }
 
@@ -292,7 +307,9 @@ class Core_Database
           break;
         case 4: // Default
           if ($item !== null && $field[5] != 'auto_increment') {
-            $sql.= " DEFAULT '".$item."'";
+            if ($item !== '') {
+              $sql.= " DEFAULT '".$item."'";
+            }
           }
           break;
         case 5: // Extra
@@ -394,6 +411,28 @@ class Core_Database
       }
       $restName = implode('', $restNameParts);
       $this->_libraryTables[$library] = $restName;
+    }
+  }
+
+  /**
+   * Method to import an sql file
+   *
+   * @param string  $file The SQL file
+   * @param boolean $exex Should file be executed?
+   *
+   * @return None
+   */
+  public function importSqlFile($file, $exec)
+  {
+    $sql = file_get_contents($file);
+    if ($exec) {
+      try {
+        $this->_writeDb->getConnection()->exec($sql);
+        return true;
+      } catch (Exception $e) {
+        $this->_logger->debug(__METHOD__.' error: '.$e->getMessage());
+        return false;
+      }
     }
   }
 

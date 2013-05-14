@@ -116,7 +116,7 @@ class Core_Model_User extends Core_Model_Person
     $select = $this->_readDb->select()
        ->from(array('u' => 'core_user'))
        ->where('u.token = ?', $token);
-    $results = $db->query($select)->fetchAll();
+    $results = $this->_readDb->query($select)->fetchAll();
     if (isset($results[0]['id'])) {
       return $results[0];
     } else {

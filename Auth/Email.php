@@ -29,26 +29,33 @@ class Core_Auth_Email extends Core_Auth
   /**
    * Method to update a password from a token link
    *
-   * @param  string $token    A user token
-   * @param  string $password The submitted password
-   * @param  string $confirm  The submitted confirm
+   * @param  string  $token     A user token
+   * @param  string  $password  The submitted password
+   * @param  string  $confirm   The submitted confirm
+   * @param  boolean $logUserIn Log the user in?
    *
    * @return boolean true upon success, false otherwise
    */
-  public function updatePassword($token, $password, $confirm)
+  public function updatePassword($token, $password, $confirm, $logUserIn=false)
   {
     $this->_logger->debug(__METHOD__);
     // check for valid password
-    $pattern = '^((?=.*(\d|\W))(?=.*[a-zA-Z]).{7,})$';
-    $validator = new Zend_Validate_Regex(array('pattern' => $pattern));
-    if ($validator->isValid($password) && $validator->isValid($confirm)) {
+    $numbers  = preg_match('@[0-9]@', $password);
+    $letters = preg_match('@([a-zA-Z]{6,}[a-zA-Z]*)@', $password);
+    /*$this->_logger->debug(__METHOD__.' password: '.$password);
+    $this->_logger->debug(__METHOD__.' numbers: '.$numbers);
+    $this->_logger->debug(__METHOD__.' letters: '.$letters);*/
+    if ($numbers && $letters) {
       if ($password === $confirm) {
         $userModel = new Core_Model_User();
         $userData = $userModel->getUserByToken($token);
         if (!empty($userData['id'])) {
-          $password = $this->hashPassword($password, $userData['user_salt']);
+          $password = $this->hashPassword($password, $userData['usersalt']);
           $updateData = array('password' => $password);
-          $userModel->updateRecord($userData['id'], $updateData);
+          $updated = $userModel->updateRecord($userData['id'], $updateData);
+          if ($updated && $logUserIn) {
+            $this->_login($userData['id']);
+          }
           return true;
         } else {
           $this->_logger->warn(__METHOD__.' could not find user for token');
@@ -76,7 +83,7 @@ class Core_Auth_Email extends Core_Auth
   {
     $userModel = new Core_Model_User();
     $userData = $userModel->getUserByEmail($email, true);
-    if (!empty($userData['password']) && !empty($user['usersalt'])) {
+    if (!empty($userData['password']) && !empty($userData['usersalt'])) {
       $hashedPassword = $userData['password'];
       $userSalt       = $userData['usersalt'];
       if ($this->verifyPassword($password, $hashedPassword, $userSalt)) {
@@ -125,7 +132,7 @@ class Core_Auth_Email extends Core_Auth
   {
     $this->_logger->debug(__METHOD__);
     $appSalt = Zend_Registry::get('app_salt');
-    if (sha1($appSalt.$password.$userSalt) === $hashedPassword){
+    if (sha1($appSalt.$password.$userSalt) == $hashedPassword){
       return true;
     } else {
       return false;

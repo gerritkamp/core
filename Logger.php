@@ -21,11 +21,12 @@ class Core_Logger extends Zend_Log
    */
   protected $_logWriters = array();
 
-  public function __construct($writers=array())
+  public function __construct($writers=array(), $maxPriority)
   {
     parent::__construct();
     $this->_logWriters = $writers;
     $this->_setWriters();
+    $this->_maxPriority = $maxPriority;
   }
 
   protected function _setWriters()
@@ -68,24 +69,26 @@ class Core_Logger extends Zend_Log
    */
   protected function _writeMessage($message, $priority)
   {
-    if (in_array('firebug', $this->_logWriters)) {
-      $request = new Zend_Controller_Request_Http();
-      $response = new Zend_Controller_Response_Http();
-      $channel = Zend_Wildfire_Channel_HttpHeaders::getInstance();
-      $channel->setRequest($request);
-      $channel->setResponse($response);
+    if ($this->_maxPriority >= $priority) {
+      if (in_array('firebug', $this->_logWriters)) {
+        $request = new Zend_Controller_Request_Http();
+        $response = new Zend_Controller_Response_Http();
+        $channel = Zend_Wildfire_Channel_HttpHeaders::getInstance();
+        $channel->setRequest($request);
+        $channel->setResponse($response);
 
-      // Start output buffering
-      ob_start();
+        // Start output buffering
+        ob_start();
 
-      // Now you can make calls to the logger
-      $this->log($message, $priority);
+        // Now you can make calls to the logger
+        $this->log($message, $priority);
 
-      // Flush log data to browser
-      $channel->flush();
-      $response->sendHeaders();
-    } else {
-      $this->log($message, $priority);
+        // Flush log data to browser
+        $channel->flush();
+        $response->sendHeaders();
+      } else {
+        $this->log($message, $priority);
+      }
     }
   }
 

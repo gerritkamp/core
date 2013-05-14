@@ -25,4 +25,26 @@ class Core_Model_UserRole extends Core_Model
     array("role", "int(10) unsigned", "NO", "MUL", "0", "")
   );
 
+  /**
+   * Method to get the roles for a given user
+   *
+   * @param  integer $userId The user ID
+   *
+   * @return array roleIds
+   */
+  public function getUserRoles($userId)
+  {
+    $this->_logger->info(__METHOD__);
+    $select = $this->_readDb->select()
+       ->from(array('ur' => 'core_user_role'))
+       ->where('ur.user_id = ?', $userId);
+    $results = $this->_readDb->query($select)->fetchAll();
+    $roles = array();
+    if ($results) {
+      foreach ($results as $role) {
+        $roles[] = $role['role'];
+      }
+    }
+    return $roles;
+  }
 }

@@ -175,14 +175,17 @@ class Core_Model extends Zend_Db_Table_Abstract
   public function updateRecord($id, $params)
   {
     $tableName = $this->getTableName();
+    $this->_logger->info(__METHOD__.' table: '.$tableName);
     if ($tableName) { // only if class has tablename
       // filter out the fields that are not relevant
       $fieldNames = $this->getTableFieldNames();
+      $updateData = array();
       foreach ($params as $key => $value) {
         if (in_array($key, $fieldNames)) {
           $updateData[$key] = $value;
         }
       }
+      $this->_logger->info(__METHOD__.' data: '.print_r($updateData, true));
       if (!empty($updateData)) {
         $this->_writeDb->update($tableName, $updateData, 'id='.(int)$id);
       }
