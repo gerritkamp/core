@@ -53,6 +53,11 @@ class Core_Controller_Action extends Zend_Controller_Action
       $this->view->flashMessage = $this->_session->flashMessage;
       $this->_session->flashMessage = null;
     }
+
+    $this->view->controller = $request->getControllerName();
+    $this->view->action     = $request->getActionName();
+    $this->view->viewPath   = ROOT_PATH.'/application/views/scripts/'.
+      $request->getControllerName();
   }
 
   /**
@@ -65,4 +70,25 @@ class Core_Controller_Action extends Zend_Controller_Action
     $this->_session->flashMessage = $message;
   }
 
+  /**
+   * Method to turn a role integer into an array
+   *
+   * @param integer $role The role
+   *
+   * @return array roles array
+   */
+  public function getRoleArray($role)
+  {
+    $this->_logger->info(__METHOD__);
+    $notLoggedInRoles = $this->_acl->getNotLoggedInRoles();
+    $roles = array();
+    foreach ($notLoggedInRoles as $key => $value) {
+      if ($role == $key) {
+        $roles[$key] = 1;
+      } else {
+        $roles[$key] = 0;
+      }
+    }
+    return $roles;
+  }
 }

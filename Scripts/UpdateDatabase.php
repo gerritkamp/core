@@ -21,7 +21,11 @@ class Core_Scripts_UpdateDatabase extends Core_Scripts
   public function executeScript($params)
   {
     $database = new Core_Database();
-    $result = $database->updateDatabase(true);
+    $exec         = true;
+    $reset        = false;
+    $returnError  = true;
+    $deleteTables = true;
+    $result = $database->updateDatabase($exec, $reset, $returnError, $deleteTables);
     if ($result) {
       return ' Database updated!';
     } else {

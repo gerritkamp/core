@@ -26,7 +26,7 @@ class Core_Model_ImagePerson extends Core_Model
     array("deleted", "tinyint(3) unsigned", "NO", "", "0", ""),
     array("image_id", "int(10) unsigned", "NO", "MUL", "0", ""),
     array("person_id", "int(10) unsigned", "NO", "MUL", "0", ""),
-    array("default", "tinyint(3) unsigned", "NO", "", "0", "")
+    array("is_default", "tinyint(3) unsigned", "NO", "", "0", "")
   );
 
   protected $_image;
@@ -57,7 +57,7 @@ class Core_Model_ImagePerson extends Core_Model
       $imageUserData['image_id']  = $imageData['id'];
       $imageUserData['crdate']    = $this->_time;
       $imageUserData['cruser_id'] = $createdBy;
-      $imageUserData['default']   = $default ? 1 : 0;
+      $imageUserData['is_default']   = $default ? 1 : 0;
       $imageUserData['person_id'] = $userId;
     }
     $this->_logger->debug(__METHOD__.' image user data: '.print_r($imageUserData, true));

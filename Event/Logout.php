@@ -15,20 +15,31 @@
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
-class Core_Event_Logout extends Core_Event_Abstract implements Core_Event_Interface
+class Core_Event_Logout extends Core_Event_Abstract
 {
+
+  protected $_type = 'logout';
 
   /**
    * Method to process the event
    *
-   * @param  integer $fromPersonId The person who caused the event
-   * @param  array   $params       Submitted params
+   * @param array $params The array with event parameters. May contain from_user_id
    *
-   * @return mixed false upon error, array with params upon success
+   * @return array status
    */
-  public function processEvent($fromPersonId=0, $params=array())
+  public function processEvent($params=array())
   {
-    return $params;
+    $this->_logger->info(__METHOD__);
+    $return = array('status' => 'error');
+    if (empty($params['user_id'])) {
+      $this->_logger->err(__METHOD__.' no user id given');
+      return $return;
+    }
+    $auth = new Core_Auth();
+    $auth->logout();
+    $this->storeEvent($params['user_id']);
+    $return['status'] = 'success';
+    return $return;
   }
 
 }

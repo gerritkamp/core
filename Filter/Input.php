@@ -145,7 +145,33 @@ class Core_Filter_Input extends Zend_Filter_Input
           if (!empty($defaultMessages[$key]) && is_array($defaultMessages[$key])) {
             // take the first default message
             $tmpKeys = array_keys($defaultMessages[$key]);
-            $messages = $defaultMessages[$key][$tmpKeys[0]];
+            $messages[$key] = $defaultMessages[$key][$tmpKeys[0]];
+          }
+        }
+      }
+    }
+    return $messages;
+  }
+
+  /**
+   * Method to return a string with all errors concatenated
+   *
+   * @return string The errors
+   */
+  public function getMessage()
+  {
+    $messages = '';
+    $errors = $this->_invalidErrors;
+    $defaultMessages = $this->getMessages();
+    if ($errors) {
+      foreach ($errors as $key => $value) {
+        if (isset($this->_validatorMessages[$key])) {
+          $messages.= $this->_validatorMessages[$key].' ';
+        } else {
+          if (!empty($defaultMessages[$key]) && is_array($defaultMessages[$key])) {
+            // take the first default message
+            $tmpKeys = array_keys($defaultMessages[$key]);
+            $messages.= $defaultMessages[$key][$tmpKeys[0]].' ';
           }
         }
       }

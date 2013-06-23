@@ -25,7 +25,7 @@ class Core_Model_EmailPerson extends Core_Model
     array("deleted", "tinyint(3) unsigned", "NO", "", "0", ""),
     array("email", "varchar(255)", "NO", "UNI", "", ""),
     array("person_id", "int(10) unsigned", "NO", "MUL", "0", ""),
-    array("default", "tinyint(3) unsigned", "NO", "", "0", "")
+    array("is_default", "tinyint(3) unsigned", "NO", "", "0", "")
   );
 
   /**
@@ -55,7 +55,7 @@ class Core_Model_EmailPerson extends Core_Model
     $emailPersonData['email']     = $email;
     $emailPersonData['crdate']    = $this->_time;
     $emailPersonData['cruser_id'] = $createdBy;
-    $emailPersonData['default']   = $default ? 1 : 0;
+    $emailPersonData['is_default']   = $default ? 1 : 0;
     $emailPersonData['person_id'] = $userId;
     $this->_logger->debug(__METHOD__.' emailpersondata: '.print_r($emailPersonData, true));
     $saved = $this->_writeDb->insert($this->_tableName, $emailPersonData);
@@ -90,5 +90,22 @@ class Core_Model_EmailPerson extends Core_Model
       return false;
     }
   }
+
+  /**
+   * Method to update someone's email address
+   *
+   * @param string $oldEmail The old email address
+   * @param string $newEmail The new email address
+   *
+   * @return integer Number of records updated
+   */
+  public function updateEmail($oldEmail, $newEmail)
+  {
+    $this->_logger->info(__METHOD__);
+    $updateData = array('email' => $newEmail);
+    $oldEmail = $this->_readDb->quote($oldEmail);
+    return $this->_writeDb->update($this->_tableName, $updateData, 'email='.$oldEmail);
+  }
+
 
 }

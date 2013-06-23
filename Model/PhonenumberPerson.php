@@ -27,7 +27,7 @@ class Core_Model_PhonenumberPerson extends Core_Model
     array("phonenumber_id", "int(10) unsigned", "NO", "MUL", "0", ""),
     array("phonenumber_type", "int(10) unsigned", "NO", "MUL", "0", ""),
     array("person_id", "int(10) unsigned", "NO", "MUL", "0", ""),
-    array("default", "tinyint(3) unsigned", "NO", "", "0", ""),
+    array("is_default", "tinyint(3) unsigned", "NO", "", "0", ""),
     array("extension", "int(10) unsigned", "NO", "", "0", "")
   );
 

@@ -57,6 +57,7 @@ class Core_Acl
     $this->_request    = $request;
     $this->_controller = $request->getControllerName();
     $this->_action     = $request->getActionName();
+    $this->_logger     = Zend_Registry::get('logger');
   }
 
   /**
@@ -133,6 +134,7 @@ class Core_Acl
         }
       }
     }
+    //$this->_logger->debug(__METHOD__.' menu: '.print_r($menu, true));
     return $menu;
   }
 
@@ -149,15 +151,19 @@ class Core_Acl
     $hasAccess = false;
     $controller = $this->_controller;
     $action     = $this->_action;
+    //$this->_logger->debug('roles: '.print_r($roles, true));
     // first check access is all
     if ($this->_aclTree[$controller][$action]['access'] == 'all') {
       $hasAccess = true;
+      //$this->_logger->debug('hasAccess: '.print_r($hasAccess, true));
     } elseif(is_array($this->_aclTree[$controller][$action]['access'])) {
       foreach ($roles as $roleId) {
         if (!empty($this->_aclTree[$controller][$action]['access'][$roleId])) {
           $access = $this->_aclTree[$controller][$action]['access'][$roleId];
           if ($access == 1) { // if one role is 1, user has access, period.
             $hasAccess = true;
+            //$this->_logger->debug('roledId: '.print_r($roleId, true));
+            //$this->_logger->debug('hasAccess: '.print_r($hasAccess, true));
           }
           if ($access == 2) {
             $maybeAccess = $this->_checkSpecialAccess(
@@ -171,6 +177,7 @@ class Core_Acl
         }
       }
     }
+    //$this->_logger->debug('hasAccess: '.print_r($hasAccess, true));
     return $hasAccess;
   }
 

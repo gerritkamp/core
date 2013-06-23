@@ -18,6 +18,7 @@ class Core_Model_User extends Core_Model_Person
 {
   protected $_tableName = "core_user";
 
+  // userstatus_id's: 0=normal, 1=user_deleted, 2=admin_deleted, 3=blocked
   protected $_tableFields = array(
     array("id", "int(10) unsigned", "NO", "PRI", "", "auto_increment"),
     array("crdate", "int(10) unsigned", "NO", "", "0", ""),
@@ -26,7 +27,8 @@ class Core_Model_User extends Core_Model_Person
     array("userstatus_id", "tinyint(3) unsigned", "NO", "", "0", ""),
     array("password", "varchar(255)", "NO", "", "", ""),
     array("usersalt", "varchar(255)", "NO", "", "", ""),
-    array("token", "varchar(255)", "NO", "", "", "")
+    array("token", "varchar(255)", "NO", "", "", ""),
+    array("last_login_date", "int(10) unsigned", "NO", "", "0", "")
   );
 
 
@@ -50,7 +52,7 @@ class Core_Model_User extends Core_Model_Person
        ->joinLeft(array('ep' => 'core_email_person'),
           'u.id = ep.person_id')
        ->where('u.id = ?', $userId)
-       ->where('ep.default = 1');
+       ->where('ep.is_default = 1');
     $results = $db->query($select)->fetchAll();
     $this->_logger->debug(__METHOD__.' results: '.print_r($results, true));
     if (!empty($results[0]['person_id'])) {
@@ -89,6 +91,8 @@ class Core_Model_User extends Core_Model_Person
        ->from(array('ep' => 'core_email_person'))
        ->joinLeft(array('u' => 'core_user'),
           'u.id = ep.person_id')
+       ->joinLeft(array('p' => 'core_person'),
+          'p.id = ep.person_id')
        ->where('ep.email = ?', $email);
     $results = $db->query($select)->fetchAll();
     if (!empty($results[0]['person_id'])) {
@@ -113,15 +117,33 @@ class Core_Model_User extends Core_Model_Person
   public function getUserByToken($token)
   {
     $this->_logger->info(__METHOD__);
+    $this->_logger->debug(__METHOD__.' token: '.print_r($token, true));
     $select = $this->_readDb->select()
        ->from(array('u' => 'core_user'))
        ->where('u.token = ?', $token);
+    $this->_logger->debug(__METHOD__.' sql: '.print_r($select->__toString(), true));
     $results = $this->_readDb->query($select)->fetchAll();
+    $this->_logger->debug(__METHOD__.' results: '.print_r($results, true));
     if (isset($results[0]['id'])) {
       return $results[0];
     } else {
       return false;
     }
+  }
+
+  /**
+   * Method to generate a user token
+   *
+   * @param integer $userId The userID
+   *
+   * @return the token
+   */
+  public function createToken($userId)
+  {
+    $time = time();
+    $random = mt_rand(0, 999999);
+    $userId = (int)$userId;
+    return sha1($time.$random.$userId);
   }
 
   /**
@@ -135,9 +157,7 @@ class Core_Model_User extends Core_Model_Person
   {
     $this->_logger->info(__METHOD__);
     $userId = (int)$userId;
-    $time = time();
-    $random = mt_rand(0, 999999);
-    $token = sha1($time.$random.$userId);
+    $token = $this->createToken($userId);
     $db = $this->_writeDb;
     $data = array('token' => $token);
     $n = $db->update($this->_tableName, $data, 'id='.$userId);

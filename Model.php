@@ -51,6 +51,7 @@ class Core_Model extends Zend_Db_Table_Abstract
     $this->_writeDb  = $writeDb;
     $this->_time     = time();
     Zend_Db_Table_Abstract::setDefaultAdapter($readDb);
+    parent::__construct();
   }
 
   /**
@@ -112,6 +113,29 @@ class Core_Model extends Zend_Db_Table_Abstract
   }
 
   /**
+   * Method to get a basic record per id
+   *
+   * @param integer $id The id
+   *
+   * @return mixed array with record or false if none found
+   */
+  public function getRecordById($id)
+  {
+    $tableName = $this->getTableName();
+    if ($tableName) {
+      $db = $this->_readDb;
+      $select = $db->select()
+        ->from(array('t' => $tableName))
+        ->where('t.id = ?', $id);
+      $results = $db->query($select)->fetchAll();
+      if ($results) {
+        return $results[0];
+      }
+    }
+    return false;
+  }
+
+  /**
    * Method to insert data. Also inserts data for parent classes.
    *
    * @param  array   $cleanData Filtered data (this insertion is being escaped)
@@ -167,8 +191,8 @@ class Core_Model extends Zend_Db_Table_Abstract
   /**
    * Method to update a record
    *
-   * @param  integer $id     The record id
-   * @param  array   $params The record params
+   * @param integer $id     The record id
+   * @param array   $params The record params
    *
    * @return boolean, true upon success, false otherwise
    */
@@ -196,6 +220,39 @@ class Core_Model extends Zend_Db_Table_Abstract
         $parentClass = new $parentClassName();
         $parentData = $parentClass->updateRecord($id, $params);
       }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Method to update records with a more complex where statement
+   *
+   * @param array  $params The to be updated params
+   * @param string $where  The where statement. WARNING! This does not get quoted.
+   *
+   * @return boolean true upon success, false otherwise
+   */
+  public function updateWhere($params, $where)
+  {
+    $tableName = $this->getTableName();
+    $this->_logger->info(__METHOD__.' table: '.$tableName);
+    if ($tableName) { // only if class has tablename
+      // filter out the fields that are not relevant
+      $fieldNames = $this->getTableFieldNames();
+      $updateData = array();
+      foreach ($params as $key => $value) {
+        if (in_array($key, $fieldNames)) {
+          $updateData[$key] = $value;
+        }
+      }
+      $this->_logger->info(__METHOD__.' table: '.print_r($tableName, true));
+      $this->_logger->info(__METHOD__.' data: '.print_r($updateData, true));
+      $this->_logger->info(__METHOD__.' where: '.print_r($where, true));
+      if (!empty($updateData)) {
+        $this->_writeDb->update($tableName, $updateData, $where);
+      }
+      // no updating parents
       return true;
     }
     return false;

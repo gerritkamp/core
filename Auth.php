@@ -44,10 +44,9 @@ class Core_Auth
   public function logout()
   {
     $this->_logger->info(__METHOD__);
-    $event = new Core_Event('logout');
-    $this->_session->userRoles = null;
-    $this->_session->userData  = null;
-    $this->_session->userId    = null;
+    $removeCookie = true;
+    $readOnly = true;
+    Zend_Session::destroy($removeCookie, $readOnly);
     return true;
   }
 
@@ -71,13 +70,13 @@ class Core_Auth
     $userRoleModel = new Core_Model_UserRole();
     $roles = $userRoleModel->getUserRoles($userId);
     $this->_logger->debug(__METHOD__.' roles: '.print_r($roles, true));
-    $this->_session->userRoles = $roles;
+    $this->_session->user['user_roles'] = $roles;
     // get user data and set it in the session
     $userModel = new Core_Model_User();
     $userData = $userModel->getUserById($userId);
     $this->_logger->debug(__METHOD__.' userData: '.print_r($userData, true));
-    $this->_session->userData = $userData;
-    $this->_session->userId = $userId;
+    $this->_session->user['user_data'] = $userData;
+    $this->_session->user['user_id'] = $userId;
     // return true
     return true;
   }

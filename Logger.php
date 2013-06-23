@@ -29,6 +29,11 @@ class Core_Logger extends Zend_Log
     $this->_maxPriority = $maxPriority;
   }
 
+  public function setPriority($maxPriority)
+  {
+    $this->_maxPriority = $maxPriority;
+  }
+
   protected function _setWriters()
   {
     if ($this->_logWriters) {

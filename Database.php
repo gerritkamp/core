@@ -34,13 +34,16 @@ class Core_Database
   /**
    * Method to update a database based on the model definitions
    *
-   * @param boolean $exec        Should the statements be executed or just generated?
-   * @param boolean $reset       Should datbabase be reset?
-   * @param boolean $returnError Should error messages be returned?
+   * @param boolean $exec         Should the statements be executed or just generated?
+   * @param boolean $reset        Should datbabase be reset?
+   * @param boolean $returnError  Should error messages be returned?
+   * @param boolean $deleteTables Should tables be deleted?
    *
    * @return mixed false upon failure, array with sql statements on success
    */
-  public function updateDatabase($exec=false, $reset=false, $returnError)
+  public function updateDatabase(
+    $exec=false, $reset=false, $returnError=true, $deleteTables=false
+  )
   {
     $this->_logger->info(__METHOD__);
     // check for tables in database that are not defined
@@ -94,7 +97,7 @@ class Core_Database
       // check for tables in database that are not defined
       foreach ($this->_existingTables as $tableName) {
         if (!in_array($tableName, $definedTables)) {
-          $results[$tableName] = $this->dropTable($tableName, $exec);
+          $results[$tableName] = $this->dropTable($tableName, $deleteTables);
         }
       }
     } catch (Exception $e) {
@@ -246,10 +249,10 @@ class Core_Database
       if (empty($asIs[3])) {
         $sql.= $this->addIndexSql($tableName, $toBe[0], $toBe[3]);
       } elseif (empty($toBe[3])) {
-        $sql.= $this->dropIndexSql($tableName, $asIs[0]);
+        $sql.= $this->dropIndexSql($tableName, $asIs[0], $exec);
       } else {
         // first drop and then create index
-        $sql.= $this->dropIndexSql($tableName, $asIs[0]);
+        $sql.= $this->dropIndexSql($tableName, $asIs[0], $exec);
         $sql.= $this->addIndexSql($tableName, $toBe[0], $toBe[3]);
       }
     }

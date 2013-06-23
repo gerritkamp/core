@@ -27,7 +27,7 @@ class Core_Model_OrganizationAddress extends Core_Model
     array("organization_id", "int(10) unsigned", "NO", "MUL", "0", ""),
     array("address_id", "int(10) unsigned", "NO", "MUL", "0", ""),
     array("address_type", "int(10) unsigned", "NO", "MUL", "0", ""),
-    array("default", "tinyint(3) unsigned", "NO", "", "0", "")
+    array("is_default", "tinyint(3) unsigned", "NO", "", "0", "")
   );
 
 }

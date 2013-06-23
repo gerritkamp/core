@@ -26,7 +26,7 @@ class Core_Model_ImageUser extends Core_Model
     array("deleted", "tinyint(3) unsigned", "NO", "", "0", ""),
     array("image_id", "int(10) unsigned", "NO", "MUL", "0", ""),
     array("user_id", "int(10) unsigned", "NO", "MUL", "0", ""),
-    array("default", "tinyint(3) unsigned", "NO", "", "0", "")
+    array("is_default", "tinyint(3) unsigned", "NO", "", "0", "")
   );
 
 }
