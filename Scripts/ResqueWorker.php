@@ -31,7 +31,7 @@ class Core_Scripts_ResqueWorker extends Core_Scripts
   public function executeScript($params)
   {
     if(empty($params['queue'])) {
-      return ("Set queue variable containing the list of queues to work.\n");
+      return ("Set queue variable containing the csv list of queues to work.\n");
     } else {
       $queue = $params['queue'];
     }
