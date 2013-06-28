@@ -47,7 +47,7 @@ class Core_Email
   {
     $this->_logger->info(__METHOD__);
     $this->_logger->debug(__METHOD__.' to: '.print_r($to, true));
-    $params['host_url'] = $this->_config->app->host_url;
+    $params['host_url'] = Zend_Registry::get('host_url');
     if (!$bulk) {
       if (isset($to['name']) && isset($to['email'])) {
         $newTo[0] = $to;  // set into single item array format

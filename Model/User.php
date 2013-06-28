@@ -160,7 +160,7 @@ class Core_Model_User extends Core_Model_Person
     $token = $this->createToken($userId);
     $db = $this->_writeDb;
     $data = array('token' => $token);
-    $n = $db->update($this->_tableName, $data, 'id='.$userId);
+    $n = $db->update('core_user', $data, 'id='.$userId);
     if ($n) {
       return $token;
     } else {

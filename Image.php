@@ -64,7 +64,7 @@ class Core_Image
   {
     switch ($this->_config->app->file_storage_method) {
       case 'local':
-        return $this->_config->app->host_url.
+        return Zend_Registry::get('host_url').
           $this->_config->app->local_storage->img.'/';
         break;
       case 'rackspace':

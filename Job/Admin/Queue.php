@@ -6,12 +6,12 @@
  * Resque data model:
  *
  * resque:queues
- *   set: members are the names of the various queues.
- *   Example: "forgot_password"
+ *   set: members are the names of the various queues. Format 'account':'type'
+ *   Example: "stevens:email"
  *
  * resque:workers
  *   set: members are the processes. Format: servername:process_id:queuename.
- *   Example: "gerrit-VirtualBox:2893:forgot_password"
+ *   Example: "gerrit-VirtualBox:2893:stevens:email"
  *
  * resque:failed
  *   list: members are the details of the failed jobs.
@@ -47,9 +47,8 @@
  * resque:stat:processed/failed/
  *   type: string value: count of jobs that are processed/failed
  *
- * resque:stat:processed/failed:queueId
+ * resque:stat:processed/failed:queuename
  *   type: string value: count of jobs that are processed/failed in this particular queue
- *
  *
  * @category   Core
  * @package    Core_Job
@@ -63,7 +62,7 @@
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
-class Core_Job_Admin_Queue
+class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
 {
 
   /**
@@ -75,6 +74,56 @@ class Core_Job_Admin_Queue
    * @var string Type
    */
   protected $_type = null;
+
+  public function setAccountUrl($accountUrl)
+  {
+    $this->_accountUrl = $accountUrl;
+  }
+
+  public function setType($type)
+  {
+    $this->_type = $type;
+  }
+
+  public function getQueueName()
+  {
+    if (!empty($this->_accountUrl) && !empty($this->_type)) {
+      return $this->_accountUrl.':'.$this->_type;
+    }
+    return null;
+  }
+
+  public function getWaitingCount()
+  {
+      return $this->_redis->llen($this->_prefix.':queue:'.$this->getQueueName());
+  }
+
+  public function getFailedCount()
+  {
+    return $this->_redis->get($this->_prefix.':stat:failed:'.$this->getQueueName());
+  }
+
+  public function getProcessedCount()
+  {
+    return $this->_redis->get($this->_prefix.':stat:processed:'.$this->getQueueName());
+  }
+
+  public function getProcessPids()
+  {
+    $workers = $this->_redis->smembers($this->_prefix.':workers');
+    $pids = array();
+    if ($workers) {
+      $thisQueueName = $this->getQueueName();
+      foreach ($workers as $worker) {
+        $parts = explode(':', $worker);
+        $queueName = $parts[2].':'.$parts[3];
+        if ($queueName == $thisQueueName) {
+          $pids[] = $parts[1];
+        }
+      }
+    }
+    return $pids;
+  }
 
 
 

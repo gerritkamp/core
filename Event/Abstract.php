@@ -61,9 +61,9 @@ abstract class Core_Event_Abstract
     $this->_logger->info(__METHOD__);
     // stores event in db
     $eventParams = array(
-      'person_id'  => $fromPersonId,
-      'event_type' => $this->_type,
-      'params'     => json_encode($params)
+      'person_id'     => $fromPersonId,
+      'event_type_id' => $this->_eventTypeId,
+      'params'        => json_encode($params)
     );
     $eventModel = new Core_Model_Event();
     $eventData = $eventModel->insertNewRecord($eventParams);
@@ -81,6 +81,6 @@ abstract class Core_Event_Abstract
     $this->_logger->info(__METHOD__);
     $type = $type ? $type : $this->_type;
     // calls jobqueue to process event
-    Resque::enqueue($type, 'Core_Job', $args);
+    Resque::enqueue(Zend_Registry::get('account').':'.$type, 'Core_Job', $args);
   }
 }
