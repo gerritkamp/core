@@ -18,6 +18,13 @@
 class Core_Scripts
 {
 
+  public function __construct()
+  {
+    $maxLogLevel = 7;
+    $writers = array('file');
+    $this->_logger = New Core_Logger($writers, $maxLogLevel);
+  }
+
   /**
    * Method to execute a script. Should be overwritten in child classes.
    *

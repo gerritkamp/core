@@ -42,4 +42,43 @@ class Core_Job_Admin_QueueList extends Core_Job_Admin_Abstract
     return $pids;
   }
 
+  /**
+   * Method to get all the queue names
+   *
+   * @return array with all queue names
+   */
+  public function getAllQueueNames()
+  {
+    return $this->_redis->smembers($this->_prefix.':queues');
+  }
+
+  /**
+   * Method to get the details of each queue
+   *
+   * @return array list with details for each queue
+   */
+  public function getAllQueueDetails()
+  {
+    $queueNames = $this->getAllQueueNames();
+    $queues = array();
+    if ($queueNames) {
+      foreach ($queueNames as $queueName) {
+        $queue = new Core_Job_Admin_Queue($queueName);
+        $pids = $queue->getProcessIds();
+        $queue[] = array(
+          'queuename' => $queueName,
+          'account' => $queue->getAccountUlr(),
+          'type' => $queue->getType(),
+          'process_count' => $queue->getProcessCount(),
+          'cpu' => $queue->getCpuUsage($pids, true),
+          'mem' => $queue->getMemUsage($pids, true),
+          'waiting' => $queue->getWaitingCount(),
+          'failed' => $queue->getFailedCount(),
+          'processed' => $queue->getProcessedCount()
+          );
+      }
+    }
+    return $queues;
+  }
+
 }

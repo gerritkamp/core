@@ -35,7 +35,7 @@ class Core_Database
    * Method to update a database based on the model definitions
    *
    * @param boolean $exec         Should the statements be executed or just generated?
-   * @param boolean $reset        Should datbabase be reset?
+   * @param boolean $reset        Should database be reset?
    * @param boolean $returnError  Should error messages be returned?
    * @param boolean $deleteTables Should tables be deleted?
    *

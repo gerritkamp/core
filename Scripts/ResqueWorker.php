@@ -25,6 +25,7 @@ class Core_Scripts_ResqueWorker extends Core_Scripts
    *
    * @param  array $params The params for the worker.
    *                       Must contain 'queue'. Comma separated list of queues, ex: "email, pdf"
+   *                       Can contain count: the number of processes to start
    *
    * @return string Any messages generated during starting up of workers
    */
@@ -45,7 +46,7 @@ class Core_Scripts_ResqueWorker extends Core_Scripts
     $loggingNormal  = $config->resque->loggingNormal;
     $loggingVerbose = $config->resque->loggingVerbose;
     $interval       = $config->resque->interval;
-    $count          = $config->resque->count;
+    $count          = empty($params['count']) ? $config->resque->count : $params['count'];
     $message        = '';
 
     // set the connection to redis
