@@ -43,11 +43,18 @@ abstract class Core_Datatable_Source_Abstract
   }
 
   /**
-   * Get ids and the data needed for sorting/paging for certain search term
+   * Get count of all records before applying any search filter
    *
    * @return mixed
    */
-  abstract protected function getSortedSearchData($params=array());
+  abstract protected function getIdsBySearchData($params=array());
+
+  /**
+   * Get ids for a certain search term
+   *
+   * @return mixed
+   */
+  abstract protected function getPagedDataBySearchTerm($params=array());
 
   /**
    * Get data given a set of ids
@@ -61,6 +68,6 @@ abstract class Core_Datatable_Source_Abstract
    *
    * @return mixed
    */
-  abstract protected function getData($ids=array());
+  abstract protected function getPagedData($params=array());
 
 }

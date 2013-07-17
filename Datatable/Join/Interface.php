@@ -18,6 +18,13 @@ interface Core_Datatable_Join_Interface
 {
 
   /**
+   * Get count of all records before applying any search filter
+   *
+   * @return mixed
+   */
+  public function getCountAll();
+
+  /**
    * Method to get the columns that need to be returned
    */
   public function getColumns();
