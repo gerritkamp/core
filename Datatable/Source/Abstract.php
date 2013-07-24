@@ -34,6 +34,11 @@ abstract class Core_Datatable_Source_Abstract
   protected $_type;
 
   /**
+   * @var String event type
+   */
+  protected $_columns;
+
+  /**
    * Constructor
    */
   public function __construct()
@@ -69,5 +74,15 @@ abstract class Core_Datatable_Source_Abstract
    * @return mixed
    */
   abstract protected function getPagedData($params=array());
+
+  /**
+   * Method to return the columns
+   *
+   * @return array The columns
+   */
+  public function getColumns()
+  {
+    return $this->_columns;
+  }
 
 }

@@ -96,10 +96,10 @@ class Core_Datatable_Join
     foreach ($return['data'] as $key => $row) {
       // get formatted data
       $row = $this->formatRow($row);
-      // ensure we got all columsn and not one more
+      // ensure we got all columns and not one more
       $rec = array();
-      foreach ($fields as $index => $label) {
-        $rec[$index] = $row[$label];
+      foreach (array_keys($this->_columns) as $index => $column) {
+        $rec[$index] = $row[$column];
       }
       $aaData[] = $rec;
     }
@@ -195,27 +195,29 @@ class Core_Datatable_Join
   protected function _getPagedData()
   {
     $this->_logger->info(__METHOD__);
-    $sortSourceId = $this->_getSourceForSorting();
-    // get from the sorting source the count of records that are in the dataset
-    //$this->_logger->debug(__METHOD__.' sort source id'. $sortSourceId);
     // get the count of all records
     $countAll = $this->getCountAll();
+    $this->_logger->debug(__METHOD__.' count all '.$countAll);
     // now get the paged data from the source that has the sort column
+    $sortSourceId = $this->_getSourceForSorting();
+    $this->_logger->debug(__METHOD__.' sort source id '.$sortSourceId);
     $data = $this->_sources[$sortSourceId]->getPagedData($this->_params);
+    $this->_logger->debug(__METHOD__.' data '.print_r($data, true));
     // and now get the data from the other sources
     $ids = array_keys($data);
-    foreach ($searchSources as $sourceId => $fields) {
+    foreach ($this->_sources as $sourceId => $source) {
       if ($sourceId !== $sortSourceId) {
-        $extraData = $this->_sources[$sourceId]->getDataByIds($ids);
+        $extraData = $source->getDataByIds($ids);
         foreach ($extraData as $id => $results) {
           $data[$id] = array_merge($data[$id], $results);
         }
       }
     }
+    $this->_logger->debug(__METHOD__.' data '.print_r($data, true));
 
     return array(
       'count_total'   => $countAll,
-      'count_display' => count($filterIds),
+      'count_display' => $countAll,
       'data'          => $data
     );
   }
@@ -272,12 +274,12 @@ class Core_Datatable_Join
     } else {
       $sortKeys = array_keys($this->_columns);
       $sortColumn = $sortKeys[$this->_params['iSortCol_0']];
-      foreach ($this->_searchFields as $sourceId => $fields) {
-        if ($fields) {
-          foreach ($fields as $field) {
-            if ($sortColumn == $field) {
-              $this->_sortSource = $sourceId;
-            }
+      foreach ($this->_sources as $sourceId => $source) {
+        $fields = $source->getColumns();
+        foreach ($fields as $field) {
+          if ($sortColumn == $field) {
+            $this->_sortSource = $sourceId;
+            $this->_params['sort_column'] = $sortColumn;
           }
         }
       }

@@ -82,12 +82,13 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function __construct($queueName='')
   {
+    parent::__construct();
+    $this->_logger->debug(__METHOD__.' queuename: '.$queueName);
     if ($queueName) {
-      $parts = explode(':'. $queueName);
+      $parts = explode(':', $queueName);
       $this->setAccountUrl($parts[0]);
       $this->setType($parts[1]);
     }
-    parent::__construct();
   }
 
   /**
@@ -99,6 +100,8 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function setAccountUrl($accountUrl)
   {
+    $this->_logger->info(__METHOD__);
+    $this->_logger->debug(__METHOD__.' url:'.$accountUrl);
     $this->_accountUrl = $accountUrl;
   }
 
@@ -109,6 +112,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function getAccountUrl()
   {
+    $this->_logger->info(__METHOD__);
     return $this->_accountUrl;
   }
 
@@ -121,6 +125,8 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function setType($type)
   {
+    $this->_logger->info(__METHOD__);
+    $this->_logger->debug(__METHOD__.' type:'.$type);
     $this->_type = $type;
   }
 
@@ -131,6 +137,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function getType()
   {
+    $this->_logger->info(__METHOD__);
     return $this->_type;
   }
 
@@ -141,6 +148,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function getQueueName()
   {
+    $this->_logger->info(__METHOD__);
     if (!empty($this->_accountUrl) && !empty($this->_type)) {
       return $this->_accountUrl.':'.$this->_type;
     }
@@ -154,7 +162,11 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function getWaitingCount()
   {
-      return $this->_redis->llen($this->_prefix.':queue:'.$this->getQueueName());
+      $this->_logger->info(__METHOD__);
+      $key = $this->_prefix.':queue:'.$this->getQueueName();
+      $this->_logger->debug(__METHOD__.' key: '.$key);
+      $count = $this->_redis->llen($key);
+      return $count ? $count : 0;
   }
 
   /**
@@ -164,7 +176,9 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function getFailedCount()
   {
-    return $this->_redis->get($this->_prefix.':stat:failed:'.$this->getQueueName());
+    $this->_logger->info(__METHOD__);
+    $count = $this->_redis->get($this->_prefix.':stat:failed:'.$this->getQueueName());
+    return $count ? $count : 0;
   }
 
   /**
@@ -174,7 +188,9 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function getProcessedCount()
   {
-    return $this->_redis->get($this->_prefix.':stat:processed:'.$this->getQueueName());
+    $this->_logger->info(__METHOD__);
+    $count = $this->_redis->get($this->_prefix.':stat:processed:'.$this->getQueueName());
+    return $count ? $count : 0;
   }
 
   /**
@@ -182,8 +198,9 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    *
    * @return array with process IDs
    */
-  public function getProcessPids()
+  public function getProcessIds()
   {
+    $this->_logger->info(__METHOD__);
     $workers = $this->_redis->smembers($this->_prefix.':workers');
     $pids = array();
     if ($workers) {
@@ -208,8 +225,9 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function countProcesses($pids=array())
   {
+    $this->_logger->info(__METHOD__);
     if (!$pids) {
-      $pids = $this->getProcessPids();
+      $pids = $this->getProcessIds();
     }
     return count($pids);
   }
@@ -224,8 +242,9 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function getCpuUsage($pids=array(), $total=false)
   {
+    $this->_logger->info(__METHOD__);
     if (!$pids) {
-      $pids = $this->getProcessPids();
+      $pids = $this->getProcessIds();
     }
     $cpu = array();
     $sum = 0;
@@ -249,10 +268,11 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    *
    * @return array with memory usage per process ID
    */
-  public function getMemoryUsage($pids=array(), $total=false)
+  public function getMemUsage($pids=array(), $total=false)
   {
+    $this->_logger->info(__METHOD__);
     if (!$pids) {
-      $pids = $this->getProcessPids();
+      $pids = $this->getProcessIds();
     }
     $mem = array();
     $sum = 0;
@@ -277,8 +297,9 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function removeOneProcess($pids=array())
   {
+    $this->_logger->info(__METHOD__);
     if (!$pids) {
-      $pids = $this->getProcessPids();
+      $pids = $this->getProcessIs();
     }
     $countPids = count($pids);
     if ($countPids) {
@@ -295,8 +316,9 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function removeAllProcesses($pids=array())
   {
+    $this->_logger->info(__METHOD__);
     if (!$pids) {
-      $pids = $this->getProcessPids();
+      $pids = $this->getProcessIs();
     }
     foreach ($pids as $pid) {
       posix_kill($pid, 9);
@@ -312,6 +334,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    */
   public function addProcess($children=1)
   {
+    $this->_logger->info(__METHOD__);
     $accountUrl = $this->getAccountUrl();
     $type = $this->getType();
     $path = '/var/www/'.$accountUrl.'/scripts/';
