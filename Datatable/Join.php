@@ -72,6 +72,8 @@ class Core_Datatable_Join
   public function getData()
   {
     $this->_logger->info(__METHOD__);
+    // get data, different options depending on search params
+    // each option returns an array with 'data', 'count_total', and 'count_display'
     // is there search
     if (!empty($this->_params['sSearch'])) {
       $searchSources = array();
@@ -80,17 +82,11 @@ class Core_Datatable_Join
           $searchSources[$sourceId] = $fields;
         }
       }
-      // is it from multiple columns?
-      if (count($searchSources) > 1) {
-        $return = $this->_getCombinedSearch($searchSources);
-      } else {
-        $sourceIds = array_keys($searchSources);
-        $return = $this->_getSingleSearch($sourceIds[0]);
-      }
+      // get filtered page data
+      $return = $this->_getFilteredPageData($searchSources);
     } else {
       $return = $this->_getPagedData();
     }
-    // each should return an array with 'data', 'count_total', and 'count_display'
 
     // get formattted data and ensure we only return configured columns
     foreach ($return['data'] as $key => $row) {
@@ -110,7 +106,6 @@ class Core_Datatable_Join
       "iTotalDisplayRecords" => $return['count_display'],
       "aaData"               => $aaData
     );
-
   }
 
   /**
@@ -120,7 +115,7 @@ class Core_Datatable_Join
    *
    * @return array with 'data', 'count_total', and 'count_display'
    */
-  protected function _getCombinedSearch($searchSources)
+  protected function _getFilteredPageData($searchSources)
   {
     $this->_logger->info(__METHOD__);
     $sortSourceId = $this->_getSourceForSorting();
@@ -128,52 +123,27 @@ class Core_Datatable_Join
     $countAll = $this->getCountAll();
     // get from each relevant source the ID's that match the search criteria
     $filterIds = array();
-    foreach ($searchSources as $sourceId => $fields) {
-      $filterIds = array_values(array_unique(
-        $filterIds, $this->_sources[$id]->getIdsBySearchData($this->_params)
-      ));
-    }
-    // now use these ID's to get the paged data from the source that has the sort column
-    $data = $this->_sources[$sortSourceId]->getPagedDataBySearchTerm($this->_params);
-    $ids = array_keys($data);
-    foreach ($searchSources as $sourceId => $fields) {
-      if ($sourceId !== $sortSourceId) {
-        $extraData = $this->_sources[$sourceId]->getDataByIds($ids);
-        foreach ($extraData as $id => $results) {
-          $data[$id] = array_merge($data[$id], $results);
-        }
+    // is it from multiple sources? (not tested yet!!)
+    if (count($searchSources) > 1) {
+      /********************************  not tested start *****************/
+      foreach ($searchSources as $sourceId => $fields) {
+        $filterIds = array_values(array_unique(
+          $filterIds, $this->_sources[$id]->getIdsBySearchData($this->_params)
+        ));
       }
+      /********************************  not tested end *******************/
+    } else {
+      $sourceIds = array_keys($searchSources);
+      $filterIds = $this->_sources[$sourceIds[0]]->getIdsBySearchData($this->_params);
     }
-
-    return array(
-      'count_total'   => $countAll,
-      'count_display' => count($filterIds),
-      'data'          => $data
-    );
-  }
-
-  /**
-   * Method to get data when there is a search term within one datasource
-   *
-   * @param array $searchSource The one search source
-   *
-   * @return @return array with 'data', 'count_total', and 'count_display'
-   */
-  protected function _getSingleSearch($searchSourceId)
-  {
-    $this->_logger->info(__METHOD__);
-    $sortSourceId = $this->_getSourceForSorting();
-    // get the count of records that are in the pre-search dataset
-    $countAll = $this->getCountAll();
-    // get from the search source the ID's that match the search criteria
-    $filterIds = $this->_sources[$searchSourceId]->getIdsBySearchData($this->_params);
+    $this->_logger->debug(__METHOD__.' filterIds '.print_r($filterIds, true));
     // now use these ID's to get the paged data from the source that has the sort column
-    $data = $this->_sources[$sortSourceId]->getPagedDataBySearchTerm($this->_params);
-    // and now get the data from the other sources
+    $data = $this->_sources[$sortSourceId]->getPagedData($this->_params, $filterIds);
+    $this->_logger->debug(__METHOD__.' data:'.print_r($data, true));
     $ids = array_keys($data);
-    foreach ($searchSources as $sourceId => $fields) {
+    foreach ($this->_sources as $sourceId => $source) {
       if ($sourceId !== $sortSourceId) {
-        $extraData = $this->_sources[$sourceId]->getDataByIds($ids);
+        $extraData = $source->getDataByIds($ids);
         foreach ($extraData as $id => $results) {
           $data[$id] = array_merge($data[$id], $results);
         }
@@ -197,12 +167,12 @@ class Core_Datatable_Join
     $this->_logger->info(__METHOD__);
     // get the count of all records
     $countAll = $this->getCountAll();
-    $this->_logger->debug(__METHOD__.' count all '.$countAll);
+    //$this->_logger->debug(__METHOD__.' count all '.$countAll);
     // now get the paged data from the source that has the sort column
     $sortSourceId = $this->_getSourceForSorting();
-    $this->_logger->debug(__METHOD__.' sort source id '.$sortSourceId);
+    //$this->_logger->debug(__METHOD__.' sort source id '.$sortSourceId);
     $data = $this->_sources[$sortSourceId]->getPagedData($this->_params);
-    $this->_logger->debug(__METHOD__.' data '.print_r($data, true));
+    //$this->_logger->debug(__METHOD__.' data '.print_r($data, true));
     // and now get the data from the other sources
     $ids = array_keys($data);
     foreach ($this->_sources as $sourceId => $source) {

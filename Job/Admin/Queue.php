@@ -338,8 +338,48 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
     $accountUrl = $this->getAccountUrl();
     $type = $this->getType();
     $path = '/var/www/'.$accountUrl.'/scripts/';
-    $params = '{"queue":"'.$type.'", "count":"'.$children.'"}';
-    exec($path.'script.php -s=Core_Resque_Worker -p='.$params);
+    $params = "'".'{"queue":"'.$type.'", "count":"'.$children.'"}'."'";
+    $cmd = 'nohup php '.$path.'script.php -s=Core_Scripts_ResqueWorker -p='.$params.' &';
+    $this->_logger->debug(__METHOD__.' cmd: '.$cmd);
+    return exec($cmd);
+  }
+
+  /**
+   * Method to get paged jobs
+   *
+   * @param string  $status    The status of the jobs (waiting, failed, processed, in_process)
+   * @param string  $direction Direction of sorting (asc/desc)
+   * @param integer $start     The start of the page
+   * @param integer $length    Number of items on the page
+   *
+   * @return array Array with pages jobs
+   */
+  public function getPagedJobs($status, $direction, $start, $length)
+  {
+    $this->_logger->info(__METHOD__);
+    $data = array();
+    switch ($status) {
+      case 'waiting':
+        $key = $this->_prefix.':queue:'.$this->getQueueName();
+        if (strtolower($direction) == 'desc') {
+          $n = $this->getWaitingCount();
+          $start = $n - ($start + $length);
+          $start = $start < 0 ? 0 : $start;
+          $data = $this->_redis->lrange($key, $start, $start + $length);
+          $data = array_reverse($data);
+        } else {
+          $data = $this->_redis->lrange($key, $start, $start + $length);
+        }
+        break;
+      case 'failed':
+        break;
+      case 'processed':
+        break;
+      case 'in_process':
+        break;
+    }
+
+    return $data;
   }
 
 }

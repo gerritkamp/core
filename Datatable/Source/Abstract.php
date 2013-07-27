@@ -52,28 +52,24 @@ abstract class Core_Datatable_Source_Abstract
    *
    * @return mixed
    */
-  abstract protected function getIdsBySearchData($params=array());
-
-  /**
-   * Get ids for a certain search term
-   *
-   * @return mixed
-   */
-  abstract protected function getPagedDataBySearchTerm($params=array());
+  abstract protected function getIdsBySearchData($params);
 
   /**
    * Get data given a set of ids
    *
    * @return mixed
    */
-  abstract protected function getDataByIds($ids=array());
+  abstract protected function getDataByIds($ids);
 
   /**
    * Get data and ids given a sort column and paging params
    *
+   * @param array $params The get params and the sort_column
+   * @param array $ids    Optional. If given, results are part of this set
+   *
    * @return mixed
    */
-  abstract protected function getPagedData($params=array());
+  abstract protected function getPagedData($params, $ids=array());
 
   /**
    * Method to return the columns

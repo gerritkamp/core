@@ -100,39 +100,7 @@ class Core_Job_Admin_QueueList extends Core_Job_Admin_Abstract
         $pids = $queue->getProcessIds();
         $result = array();
         foreach ($fieldNames as $field) {
-          $this->_logger->debug(__METHOD__.' field: '.$field);
-          switch ($field) {
-            case 'account':
-              $result[$field] = $queue->getAccountUlr();
-              break;
-            case 'type':
-              $result[$field] = $queue->getType();
-              break;
-            case 'process_count':
-              $result[$field] = $queue->countProcesses();
-              break;
-            case 'cpu':
-              $result[$field] = $queue->getCpuUsage($pids, true);
-              break;
-            case 'mem':
-              $result[$field] = $queue->getMemUsage($pids, true);
-              break;
-            case 'waiting':
-              $result[$field] = $queue->getWaitingCount();
-              break;
-            case 'failed':
-              $result[$field] = $queue->getFailedCount();
-              break;
-            case 'processed':
-              $result[$field] = $queue->getProcessedCount();
-              break;
-            case 'in_process': // @todo find number of items being processed
-              $result[$field] = 0;
-              break;
-            default:
-              $result[$field] = 'invalid';
-              break;
-          }
+          $result[$field] = $this->_getQueueFieldResult($queue, $field, $pids);
         }
         $queues[$queueName] = $result;
       }
@@ -145,10 +113,10 @@ class Core_Job_Admin_QueueList extends Core_Job_Admin_Abstract
    * Method to get paged data
    *
    * @param string  $sortColumn The column to sort on
-   * @param string  $direction  The direction to sort on
+   * @param string  $direction  The direction to sort on, asc or desc
    * @param integer $length     The length of the array to be returned
    * @param integer $start      The start of the array to be returned
-   * @param array   $queueNames If given, use these queuenames
+   * @param array   $queueNames If given, use these queuenames else use all available ones
    * @param array   $fieldNames If given, return these fieldnames
    *                            (otherwise its just the sortcolum)
    *
@@ -158,7 +126,95 @@ class Core_Job_Admin_QueueList extends Core_Job_Admin_Abstract
     $sortColumn, $direction, $length, $start, $queueNames=array(), $fieldNames=array()
   )
   {
+    $this->_logger->info(__METHOD__);
+    // make  sure we have good arrays to work with
+    if (!$queueNames) {
+      $queueNames = $this->getAllQueueNames();
+    }
+    if (!$fieldNames) {
+      $fieldNames[] = $sortColumn;
+    }
+    // get all the data for the sortcolumn so that we can page it
+    $data = array();
+    $queues = array();
+    foreach ($queueNames as $queueName) {
+      $queues[$queueName] = new Core_Job_Admin_Queue($queueName);
+      $data[$queueName] = $this->_getQueueFieldResult($queues[$queueName], $sortColumn);
+    }
+    // sort in right direction
+    if (strtolower($direction) != 'desc') {
+      asort($data);
+    } else {
+      arsort($data);
+    }
+    // page data, return if start is past the number of records
+    if ($start >= count($data)) {
+      return array();
+    }
+    $data = array_slice($data, $start, $length);
+    // now get all the data for this range
+    $allData = array();
+    foreach ($data as $queueName => $sortColumnDataValue) {
+      $queue = $queues[$queueName];
+      foreach ($fieldNames as $field) {
+        if ($field != $sortColumn) {
+          $allData[$queueName][$field] = $this->_getQueueFieldResult($queue, $field);
+        } else {
+          $allData[$queueName][$field] = $sortColumnDataValue;
+        }
+      }
+    }
+    return $allData;
+  }
 
+  /**
+   * Method to get the results for a given queue and a given field
+   *
+   * @param object $queue The Queue object
+   * @param string $field The field
+   * @param array  $ids   Optional, the process ids for this queue
+   *
+   * @return mixed The result for a given field
+   */
+  protected function _getQueueFieldResult($queue, $field, $pids=array())
+  {
+    $this->_logger->info(__METHOD__);
+    // $this->_logger->debug(__METHOD__.' field: '.$field);
+    switch ($field) {
+      case 'account':
+        $result = $queue->getAccountUlr();
+        break;
+      case 'type':
+        $result = $queue->getType();
+        break;
+      case 'process_count':
+        $result = $queue->countProcesses();
+        break;
+      case 'cpu':
+        $pids = !empty($pids) ? $pids : $queue->getProcessIds();
+        $result = $queue->getCpuUsage($pids, true);
+        break;
+      case 'mem':
+        $pids = !empty($pids) ? $pids : $queue->getProcessIds();
+        $result = $queue->getMemUsage($pids, true);
+        break;
+      case 'waiting':
+        $result = $queue->getWaitingCount();
+        break;
+      case 'failed':
+        $result = $queue->getFailedCount();
+        break;
+      case 'processed':
+        $result = $queue->getProcessedCount();
+        break;
+      case 'in_process': // @todo find number of items being processed
+        $result = 0;
+        break;
+      default:
+        $result = 'invalid';
+        break;
+    }
+    return $result;
   }
 
 }
