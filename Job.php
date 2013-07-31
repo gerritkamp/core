@@ -26,12 +26,22 @@ class Core_Job
   /**
    * @var Job arguments
    */
-  protected $args = array();
+  public $args = array();
 
   /**
    * @var Job queue name
    */
-  protected $queue = null;
+  public $queue = null;
+
+  /**
+   * @var Integer Event ID
+   */
+  protected $_eventId = 0;
+
+  /**
+   * @var Core event object
+   */
+  protected $_event = null;
 
   /**
    * Method to setup object
@@ -42,13 +52,20 @@ class Core_Job
   {
     // do I need to do a full autoload here?
     $this->_logger   = Zend_Registry::get('logger');
-    // Factory to create the specific class based on the queue
-    $aName = explode('_', $this->queue);
-    $className = 'Core_';
+    $this->_logger->info(__METHOD__);
+    // Factory to create the specific classs. Queuename ex: dev:email, dev:forgot_password
+    $parts = explode(':', $this->queue);
+    $aName = explode('_', $parts[1]);
+    $className = 'Core_Job_';
     foreach ($aName as $part) {
       $className.= ucfirst($part);
     }
-    $this->_object = new $className();
+    $this->_object = new $className($this->args);
+    if (!empty($this->args['event_id'])) {
+      $this->_eventId = $this->args['event_id'];
+      $this->_event = new Core_Model_Event();
+      $this->_event->updateStatus($this->_eventId, 1);
+    }
   }
 
   /**
@@ -58,7 +75,13 @@ class Core_Job
    */
   public function perform()
   {
-    $this->_object->perform($this->args);
+    try {
+      $this->_object->perform($this->args);
+      $this->_event->updateStatus($this->_eventId, 3);
+    } catch (Exception $e) {
+      $this->_logger->debug(__METHOD__.' error: '.$e->getMessage());
+      $this->_event->updateStatus($this->_eventId, 2);
+    }
   }
 
   /**
@@ -68,7 +91,8 @@ class Core_Job
    */
   public function tearDown()
   {
-    // destroy the object so that we don't run the risk of running jobs with wrong data
+    // destroy the objects so that we don't run the risk of running jobs with wrong data
+    $this->_event  = null;
     $this->_object = null;
   }
 

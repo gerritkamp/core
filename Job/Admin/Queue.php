@@ -207,6 +207,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
       $thisQueueName = $this->getQueueName();
       foreach ($workers as $worker) {
         $parts = explode(':', $worker);
+        $this->_logger->debug(__METHOD__.' parts: '.print_r($parts, true));
         $queueName = $parts[2].':'.$parts[3];
         if ($queueName == $thisQueueName) {
           $pids[] = $parts[1];
@@ -338,8 +339,10 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
     $accountUrl = $this->getAccountUrl();
     $type = $this->getType();
     $path = '/var/www/'.$accountUrl.'/scripts/';
-    $params = "'".'{"queue":"'.$type.'", "count":"'.$children.'"}'."'";
-    $cmd = 'nohup php '.$path.'script.php -s=Core_Scripts_ResqueWorker -p='.$params.' &';
+    $params = '{"queue":"'.$accountUrl.':'.$type.'", "count":"'.$children.'"}';
+    $output = " > /dev/null 2>&1 &";
+    $output = " > /var/log/resque.log 2>&1 &";
+    $cmd = "nohup php ".$path."script.php -s=Core_Scripts_ResqueWorker -p='".$params."'".$output;
     $this->_logger->debug(__METHOD__.' cmd: '.$cmd);
     return exec($cmd);
   }
