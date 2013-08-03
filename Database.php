@@ -21,13 +21,20 @@ class Core_Database
   protected $_libraryTables = array();
 
   /**
-   * Constructor
+   * Constructor of the database class
+   *
+   * @param Zend_Db_Adapter $readDb   The read Db adapter
+   * @param Zend_Db_Adapter $writeDb  The write Db adapter
+   * @param string          $rootPath The root path to the application
+   *
+   * @return null
    */
-  public function __construct()
+  public function __construct($readDb=null, $writeDb=null, $rootPath=null)
   {
     $this->_logger = Zend_Registry::get('logger');
-    $this->_readDb = Zend_Registry::get('read_db');
-    $this->_writeDb = Zend_Registry::get('write_db');
+    $this->_readDb   = empty($readDb)   ? Zend_Registry::get('read_db')  : $readDb;
+    $this->_writeDb  = empty($writeDb)  ? Zend_Registry::get('write_db') : $writeDb;
+    $this->_rootPath = empty($rootPath) ? ROOT_PATH                      : $rootPath;
     $this->_existingTables = array();
   }
 
@@ -69,7 +76,7 @@ class Core_Database
     // for each model in each library that has models
     $definedTables = array();
     try {
-      $libPath = ROOT_PATH.'/library';
+      $libPath = $this->_rootPath.'/library';
       $libs = scandir($libPath);
       foreach ($libs as $lib) {
         if (is_dir($libPath.'/'.$lib) &&  !in_array($lib, array('Zend', '.', '..'))) {
@@ -450,7 +457,7 @@ class Core_Database
   public function createSingleObject($tableName, $columns)
   {
     $this->_logger->info(__METHOD__);
-    $tmpDir = ROOT_PATH.'/tmp';
+    $tmpDir = $this->_rootPath.'/tmp';
     $nameParts = explode('_', $tableName);
     $library = ucfirst($nameParts[0]);
     $countNameParts = count($nameParts);

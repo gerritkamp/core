@@ -54,11 +54,15 @@ class Core_Job
     $this->_logger   = Zend_Registry::get('logger');
     $this->_logger->info(__METHOD__);
     // Factory to create the specific classs. Queuename ex: dev:email, dev:forgot_password
-    $parts = explode(':', $this->queue);
-    $aName = explode('_', $parts[1]);
-    $className = 'Core_Job_';
-    foreach ($aName as $part) {
-      $className.= ucfirst($part);
+    if (empty($this->args['className'])) {
+      $parts = explode(':', $this->queue);
+      $aName = explode('_', $parts[1]);
+      $className = 'Core_Job_';
+      foreach ($aName as $part) {
+        $className.= ucfirst($part);
+      }
+    } else {
+      $className = $this->args['className'];
     }
     $this->_object = new $className($this->args);
     if (!empty($this->args['event_id'])) {

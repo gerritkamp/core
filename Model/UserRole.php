@@ -1,6 +1,7 @@
 <?php
 /**
- * The UserRole model
+ * The UserRole model.
+ * Role IDs described in Mvm_Acl
  *
  * @category   Core
  * @package    Core_Model

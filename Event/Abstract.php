@@ -29,9 +29,9 @@ abstract class Core_Event_Abstract
   protected $_session;
 
   /**
-   * @var String event type
+   * @var Integer event type id
    */
-  protected $_type;
+  protected $_eventTypeId;
 
   /**
    * Constructor
