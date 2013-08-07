@@ -29,14 +29,16 @@ class Core_Deploy_VirtualHost
   protected $_template = '
     <VirtualHost *:80>
       ServerName #name.myvirtualmentor.com
-      Redirect permanent / https://#name.myvirtualmentor.com
+      Redirect permanent / https://#name.myvirtualmentor.com/
     </VirtualHost>
     <VirtualHost *:443>
       ServerName #name.myvirtualmentor.com
-      DocumentRoot /var/www/#url/public
+      DocumentRoot /var/www/#url
       ErrorLog /var/log/apache2/#url.error.log
       CustomLog /var/log/apache2/#url.access.log combined
       SetEnv APPLICATION_ENV #environment
+      SetEnv ROOT_PATH #sites/#url
+      SetEnv APPLICATION_PATH #sites/#url/application
       SSLEngine On
       SSLCertificateFile /etc/apache2/ssl/apache.crt
       SSLCertificateKeyFile /etc/apache2/ssl/apache.key
@@ -63,10 +65,11 @@ class Core_Deploy_VirtualHost
    *
    * @param string $url         Url of the new account
    * @param string $environment Environment
+   * @param string $sites       The sites folder
    *
    * @return array Default status array
    */
-  public function addNewVirtualHost($url, $environment)
+  public function addNewVirtualHost($url, $environment, $sites)
   {
     $this->_logger->info(__METHOD__);
     // create config
@@ -79,6 +82,7 @@ class Core_Deploy_VirtualHost
     }
     $config = str_replace('#name', $name, $config);
     $config = str_replace('#url', $url, $config);
+    $config = str_replace('#sites', $sites, $config);
     $return['status'] = 'success';
     // write config
     $filename = '/etc/apache2/sites-available/'.$url;
@@ -91,6 +95,24 @@ class Core_Deploy_VirtualHost
     exec($cmd);
 
     return $return;
+  }
+
+  /**
+   * Method to update the /etc/hosts file
+   *
+   * @param string $url The full url
+   *
+   * @return null
+   */
+  public function updateEtcHostsFile($url)
+  {
+    $this->_logger->info(__METHOD__);
+    $data = '127.0.0.1       '.$url.'
+';
+    $file = '/etc/hosts';
+    $f = fopen($file, "a+");
+    file_put_contents($file, $data, FILE_APPEND);
+    fclose($f);
   }
 
 

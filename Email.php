@@ -71,7 +71,7 @@ class Core_Email
     }
     switch ($this->_config->email->method) {
       case 'local':
-          $n = $this->_sendZendMail($type, $to, $params, $subject, $from, $bulk);
+        $n = $this->_sendZendMail($type, $to, $params, $subject, $from, $bulk);
         break;
       case 'all-mail':
         $n = $this->_sendAllMail($type, $to, $params, $subject, $from, $bulk);
@@ -95,6 +95,7 @@ class Core_Email
    */
   protected function _sendZendMail($type, $to, $params, $subject, $from, $bulk)
   {
+    $this->_logger->info(__METHOD__);
     // set items that are the same for each user. If subject has to be unique, the sendMail function
     // itself will need to be called multiple times
     $mail = new Zend_Mail();
@@ -132,6 +133,7 @@ class Core_Email
         // clear the recipient
         $mail->clearRecipients();
       }
+      return count($to);
     }
   }
 
@@ -161,11 +163,13 @@ class Core_Email
    */
   protected function _checkTestEmail($to)
   {
-    foreach ($to as $key => $value) {
-      if (!empty($to['email'])) {
-        if (substr($to['email'], 0, 6) == 'test++') {
-          $this->_logger->notice(__METHOD__.' not sending to test email: '.print_r($to[$key], true));
-          unset($to[$key]);
+    $this->_logger->info(__METHOD__);
+    foreach ($to as $index => $user) {
+      $this->_logger->debug(__METHOD__.' to: '.print_r($to, true));
+      if (!empty($user['email'])) {
+        if (substr($user['email'], 0, 5) == 'xtest+') {
+          $this->_logger->notice(__METHOD__.' not sending to test email: '.print_r($to[$index], true));
+          unset($to[$index]);
         }
       }
     }
@@ -187,7 +191,7 @@ class Core_Email
   protected function _createBody($type, $params)
   {
     $this->_logger->info(__METHOD__);
-    //$this->_logger->debug(__METHOD__.' params: '.print_r($params, true));
+    $this->_logger->debug(__METHOD__.' params: '.print_r($params, true));
     // create view
     $html = new Zend_View();
     $html->setScriptPath(APPLICATION_PATH.'/views/emails/');
@@ -199,7 +203,7 @@ class Core_Email
     $body = $html->render('_header.phtml');
     $body.= $html->render($template);
     $body.= $html->render('_footer.phtml');
-    //$this->_logger->debug(__METHOD__.' body: '.print_r($body, true));
+    $this->_logger->debug(__METHOD__.' body: '.print_r($body, true));
     return $body;
   }
 

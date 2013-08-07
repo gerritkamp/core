@@ -48,15 +48,22 @@ class Core_Deploy_Configuration
     $configPath = $siteDir.'/var/configs/application.ini';
     copy($srcDir.'/application/configs/application.ini', $configPath);
     // create a config object
-    $options = array('allowModification' => true);
+    $options = array('allowModifications' => true);
     $appConfig = new Zend_Config_Ini($configPath, $env, $options);
-    // update the config data
+    // update the config data @todo rewrite this so that main level keys are not overwritten
+    // probably best done with merging a fully new configuration into the old one
     foreach ($params as $key => $value) {
       $appConfig->__set($key, $value);
     }
     // write the new config
     $newConfig = new Zend_Config_Writer_Ini();
     $newConfig->write($configPath, $appConfig);
+    // replace the APPLICATION_PATH variable
+    //chmod($configPath, 0777);
+    $config = file_get_contents($configPath);
+    $config = str_replace(APPLICATION_PATH, $siteDir.'/application', $config);
+    file_put_contents($configPath, $config);
+    //chmod($configPath, 0744);
     $return['status'] = 'success';
 
     return $appConfig;

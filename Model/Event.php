@@ -5,8 +5,8 @@
  * Status:
  * 0 = unprocessed
  * 1 = in process
- * 2 = sucessfully processed
- * 3 = failed
+ * 2 = failed
+ * 3 = successfully processed
  *
  * @category   Core
  * @package    Core_Model

@@ -330,15 +330,16 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    * Method to add a process.
    *
    * @param integer $children The number of children to add to the process.
+   * @param string  $sites    The location of the sites folder
    *
    * @return null
    */
-  public function addProcess($children=1)
+  public function addProcess($children=1, $sites='/var/www')
   {
     $this->_logger->info(__METHOD__);
     $accountUrl = $this->getAccountUrl();
     $type = $this->getType();
-    $path = '/var/www/'.$accountUrl.'/scripts/';
+    $path = $sites.'/'.$accountUrl.'/scripts/';
     $params = '{"queue":"'.$accountUrl.':'.$type.'", "count":"'.$children.'"}';
     $output = " > /dev/null 2>&1 &";
     $output = " > /var/log/resque.log 2>&1 &";

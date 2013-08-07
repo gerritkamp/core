@@ -47,25 +47,31 @@ class Core_Deploy_Source
   public function deploySourceFiles($name, $app, $linkFolders, $varFolders, $src, $sites)
   {
     $this->_logger->info(__METHOD__);
-    // create the webfolder
-    $webFolder = $this->_removeDoubleSlashes('/var/www/'.$name);
-    mkdir($webFolder, 0744);
-    chown($webFolder, 'www-data');
     // create source links
-    $localSrc = $this->_removeDoubleSlashes($webFolder.'/'.$app.'_src');
+    $siteFolder = $this->_removeDoubleSlashes($sites.'/'.$name);
+    mkdir($siteFolder, 0744);
+    $localSrc = $this->_removeDoubleSlashes($siteFolder.'/'.$app.'_src');
     symlink($src, $localSrc);
     foreach ($linkFolders as $folder) {
-      symlink($localSrc.'/'.$folder, $webFolder.'/'.$folder);
+      symlink($localSrc.'/'.$folder, $siteFolder.'/'.$folder);
     }
-    // create var links
-    $siteFolder = $this->_removeDoubleSlashes($sites.'/'.$name);
-    mkdir($sitesFolder, 0744);
+    // make var folders and create links
     foreach ($varFolders as $folder) {
-      $varFolder = $this->_removeDoubleSlashes($sitesFolder.'/'.$folder);
+      $varFolder = $this->_removeDoubleSlashes($siteFolder.'/'.$folder);
       mkdir($varFolder, 0744);
-      chown($varFolder, 'www-data');
-      symlink($varFolder, $webFolder.'/'.$folder);
+      if (substr_count($folder, '/') == 0) {
+        // ignoring subfolders
+        symlink($varFolder, $siteFolder.'/'.$folder);
+      }
     }
+    // make www-data owner of site folder
+    //$this->recurseChown($siteFolder, 'www-data');
+    $cmd = "chown -R www-data ".$siteFolder;
+    exec($cmd);
+
+    // create webfolder symlink
+    $webFolder = $this->_removeDoubleSlashes('/var/www/'.$name);
+    symlink($siteFolder.'/public', $webFolder);
     $return['status'] = 'success';
 
     return $return;
@@ -77,5 +83,30 @@ class Core_Deploy_Source
     return str_replace('//', '/', $dir);
   }
 
+  /**
+   * Method to recursively change ownership
+   *
+   * @param string $mypath The file path
+   * @param string $uid    The user ID/name
+   * @param string $gui    The group ID/name
+   *
+   * @return null
+   */
+  private function recurseChown($mypath, $uid, $gid=null)
+  {
+    $d = opendir ($mypath) ;
+    while(($file = readdir($d)) !== false) {
+      if ($file != "." && $file != "..") {
+        $typepath = $mypath . "/" . $file ;
+        if (filetype ($typepath) == 'dir') {
+          $this->recurseChown($typepath, $uid, $gid);
+        }
+        chown($typepath, $uid);
+        if ($gid) {
+          chown($typepath, $gid);
+        }
+      }
+    }
+  }
 
 }

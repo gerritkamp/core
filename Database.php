@@ -88,12 +88,27 @@ class Core_Database
                 if (!in_array($model, array('.', '..'))) {
                   $model = str_replace('.php', '', $model);
                   $className = $lib.'_Model_'.$model;
-                  $class = new $className();
-                  $tableDef = $class->getTableDefinition();
-                  $tableName = $class->getTableName();
-                  $definedTables[] = $tableName;
-                  if ($tableName && $tableDef) {
-                    $results[$tableName] = $this->updateTable($tableName, $tableDef, $exec);
+                  $class = null;
+                  if (class_exists($className)) {
+                    $class = new $className(); // recognized within our own codebase
+                  } else {
+                    // perhaps class is from another codebase?
+                    $classPath = $this->_rootPath.'/library/'.$lib.'/Model/'.$model.'.php';
+                    include_once($classPath);
+                    $this->_logger->debug(__METHOD__.' path: '.$classPath);
+                    if (class_exists($className)) {
+                      $class = new $className();
+                    }
+                  }
+                  if ($class) {
+                    $tableDef = $class->getTableDefinition();
+                    $tableName = $class->getTableName();
+                    $definedTables[] = $tableName;
+                    if ($tableName && $tableDef) {
+                      $results[$tableName] = $this->updateTable($tableName, $tableDef, $exec);
+                    }
+                  } else {
+                    $this->_logger->err(__METHOD__. ' could not find class: '.$className);
                   }
                 }
               }
@@ -116,6 +131,28 @@ class Core_Database
       }
     }
     return $results;
+  }
+
+  /**
+   * Method to create a new database
+   *
+   * @param string $dbName The database name
+   * @param string $dbUser The database user
+   * @param string $dbPass The database password
+   * @param string $dbHost The database host
+   *
+   * @return none
+   */
+  public function createDatabase($dbName, $dbUser=null, $dbPass=null, $dbHost=null)
+  {
+    $this->_logger->info(__METHOD__);
+    $sql = 'create database '.$dbName;
+    $this->_writeDb->getConnection()->exec($sql);
+    if ($dbUser && $dbPass) {
+      $sql = 'grant all privileges on '.$dbName.'.* to '.$dbUser."@".$dbHost." identified by '".$dbPass."'";
+      $this->_logger->debug(__METHOD__.' sql: '.print_r($sql, true));
+      $this->_writeDb->getConnection()->exec($sql);
+    }
   }
 
   /**
