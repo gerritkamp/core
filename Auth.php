@@ -80,4 +80,19 @@ class Core_Auth
     // return true
     return true;
   }
+
+  /**
+   * Method to create a hash, used as token and as user salt
+   *
+   * @param  integer $userId Optional, the user ID
+   *
+   * @return string sha1 hash
+   */
+  public function createHash($userId=0)
+  {
+    $this->_logger->debug(__METHOD__);
+    $appSalt = Zend_Registry::get('app_salt');
+    $random = mt_rand(0, 99999999);
+    return sha1($appSalt.$random.$userId);
+  }
 }

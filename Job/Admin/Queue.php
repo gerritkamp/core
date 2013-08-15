@@ -331,19 +331,25 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    *
    * @param integer $children The number of children to add to the process.
    * @param string  $sites    The location of the sites folder
+   * @param array   $params   Any additional params
    *
    * @return null
    */
-  public function addProcess($children=1, $sites='/var/www')
+  public function addProcess($children=1, $sites='/var/www', $params=array())
   {
     $this->_logger->info(__METHOD__);
     $accountUrl = $this->getAccountUrl();
     $type = $this->getType();
     $path = $sites.'/'.$accountUrl.'/scripts/';
-    $params = '{"queue":"'.$accountUrl.':'.$type.'", "count":"'.$children.'"}';
+    $paramsString = '{"queue":"'.$accountUrl.':'.$type.'", "count":"'.$children.'"';
+    if ($params) {
+      foreach ($params as $key => $value) {
+        $paramsString.=',"'.$key.'":"'.$value.'"';
+      }
+    }
+    $paramsString.= '"}';
     $output = " > /dev/null 2>&1 &";
-    $output = " > /var/log/resque.log 2>&1 &";
-    $cmd = "nohup php ".$path."script.php -s=Core_Scripts_ResqueWorker -p='".$params."'".$output;
+    $cmd = "nohup php ".$path."script.php -s=Core_Scripts_ResqueWorker -p='".$paramsString."'".$output;
     $this->_logger->debug(__METHOD__.' cmd: '.$cmd);
     return exec($cmd);
   }

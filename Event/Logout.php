@@ -21,6 +21,11 @@ class Core_Event_Logout extends Core_Event_Abstract
   protected $_type = 'logout';
 
   /**
+   * @var integer event_type_id
+   */
+  protected $_eventTypeId = 9;
+
+  /**
    * Method to process the event
    *
    * @param array $params The array with event parameters. May contain from_user_id

@@ -5,6 +5,11 @@
  * Lots of useful info to be found here:
  * http://kamisama.me/2012/10/12/background-jobs-with-php-and-resque-part-4-managing-worker/
  *
+ * Run with:
+ * nohup php scripts/script.php -s="Core_Scripts_ResqueWorker"
+ *   -p='{"queue":"test60:email", "count":"1", "ROOT_PATH":"/home/gerrit/sites/test60"}'
+ *    > /var/log/resque.log 2>&1 &
+ *
  * @category   Core
  * @package    Core_Scripts
  * @copyright  Copyright (c) 2013 Gerrit Kamp

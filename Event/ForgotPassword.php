@@ -19,6 +19,16 @@ class Core_Event_ForgotPassword extends Core_Event_Abstract
 {
 
   /**
+   * @var string
+   */
+  protected $_type = 'forgot_password';
+
+  /**
+   * @var integer event_type_id
+   */
+  protected $_eventTypeId = 4;
+
+  /**
    * Method to process the event
    *
    * @param  array   $params       Submitted params

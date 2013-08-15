@@ -138,4 +138,5 @@ class Core_Auth_Email extends Core_Auth
       return false;
     }
   }
+
 }
