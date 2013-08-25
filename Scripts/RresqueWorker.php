@@ -22,7 +22,7 @@
  * @copyright  Copyright (c) 2013 Gerrit Kamp
  * @author     Gerrit Kamp<gpkamp@gmail.com>
  */
-class Core_Scripts_ResqueWorker extends Core_Scripts
+class Core_Scripts_RresqueWorker extends Core_Scripts
 {
 
   /**

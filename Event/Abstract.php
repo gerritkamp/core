@@ -79,8 +79,10 @@ abstract class Core_Event_Abstract
   final public function saveJob($args, $type=null)
   {
     $this->_logger->info(__METHOD__);
+    $this->_logger->debug(__METHOD__.' params: '.print_r($args, true));
+    $this->_logger->debug(__METHOD__.' type: '.print_r($type, true));
     $type = $type ? $type : $this->_type;
     // calls jobqueue to process event
-    Resque::enqueue(Zend_Registry::get('account').':'.$type, 'Core_Job', $args);
+    Resque::enqueue($type, 'Core_Job', $args);
   }
 }

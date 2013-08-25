@@ -91,4 +91,19 @@ class Core_Controller_Action extends Zend_Controller_Action
     }
     return $roles;
   }
+
+  /**
+   * Method to add data to the view
+   *
+   * @param array $params Key-Value pairs to be added to view
+   *
+   * @return null
+   */
+  protected function _addToView($params)
+  {
+    $this->_logger->info(__METHOD__);
+    foreach ($params as $key => $value) {
+      $this->view->$key = $value;
+    }
+  }
 }

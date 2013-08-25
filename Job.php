@@ -34,14 +34,14 @@ class Core_Job
   public $queue = null;
 
   /**
-   * @var Integer Event ID
+   * @var Core Job Log
    */
-  protected $_eventId = 0;
+  protected $_jobLog = null;
 
   /**
-   * @var Core event object
+   * @var Core Job Log Id
    */
-  protected $_event = null;
+  protected $_jobLogId = null;
 
   /**
    * Method to setup object
@@ -53,10 +53,9 @@ class Core_Job
     // do I need to do a full autoload here?
     $this->_logger   = Zend_Registry::get('logger');
     $this->_logger->info(__METHOD__);
-    // Factory to create the specific classs. Queuename ex: dev:email, dev:forgot_password
+    // Factory to create the specific classs. Queuename ex: email, forgot_password
     if (empty($this->args['className'])) {
-      $parts = explode(':', $this->queue);
-      $aName = explode('_', $parts[1]);
+      $aName = explode('_', $this->queue);
       $className = 'Core_Job_';
       foreach ($aName as $part) {
         $className.= ucfirst($part);
@@ -65,11 +64,9 @@ class Core_Job
       $className = $this->args['className'];
     }
     $this->_object = new $className($this->args);
-    if (!empty($this->args['event_id'])) {
-      $this->_eventId = $this->args['event_id'];
-      $this->_event = new Core_Model_Event();
-      $this->_event->updateStatus($this->_eventId, 1);
-    }
+    $this->_jobLog = new Core_Model_JobLog();
+    $jobLogData = $this->_jobLog->addNewJob($className, $this->args);
+    $this->_jobLogId = !empty($jobLogData['id']) ? $jobLogData['id'] : null;
   }
 
   /**
@@ -81,10 +78,14 @@ class Core_Job
   {
     try {
       $this->_object->perform($this->args);
-      $this->_event->updateStatus($this->_eventId, 3);
+      if (!empty($this->_jobLogId)) {
+        $this->_jobLog->updateStatus($this->_jobLogId, 3);
+      }
     } catch (Exception $e) {
-      $this->_logger->debug(__METHOD__.' error: '.$e->getMessage());
-      $this->_event->updateStatus($this->_eventId, 2);
+      $this->_logger->err(__METHOD__.' error: '.$e->getMessage());
+      if (!empty($this->_jobLogId)) {
+        $this->_jobLog->updateStatus($this->_jobLogId, 2);
+      }
     }
   }
 
@@ -96,7 +97,8 @@ class Core_Job
   public function tearDown()
   {
     // destroy the objects so that we don't run the risk of running jobs with wrong data
-    $this->_event  = null;
+    $this->_jobLog = null;
+    $this->_jobLogId = null;
     $this->_object = null;
   }
 

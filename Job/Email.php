@@ -57,6 +57,9 @@ class Core_Job_Email
     $type    = $args['email_type'];
     $to      = $args['to'];
     $params  = !empty($args['params']) ? $args['params'] : array();
+    if (!empty($args['host_url'])) {
+      $params['host_url'] = $args['host_url'];
+    }
     $subject = $args['subject'];
     $from    = $args['from'];
     $bulk    = !empty($args['bulk']) ? $args['bulk'] : false;

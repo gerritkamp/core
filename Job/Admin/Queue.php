@@ -64,16 +64,10 @@
  */
 class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
 {
-
   /**
-   * @var string Account URL
+   * @var string queueName
    */
-  protected $_accountUrl = null;
-
-  /**
-   * @var string Type
-   */
-  protected $_type = null;
+  protected $_queueName = null;
 
   /**
    * Constructor
@@ -85,60 +79,22 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
     parent::__construct();
     $this->_logger->debug(__METHOD__.' queuename: '.$queueName);
     if ($queueName) {
-      $parts = explode(':', $queueName);
-      $this->setAccountUrl($parts[0]);
-      $this->setType($parts[1]);
+      $this->setQueueName($queueName);
     }
   }
 
   /**
-   * Method to set the account url
+   * Method to set the queuename
    *
-   * @param string $accountUrl The account url
-   *
-   * @return null
-   */
-  public function setAccountUrl($accountUrl)
-  {
-    $this->_logger->info(__METHOD__);
-    $this->_logger->debug(__METHOD__.' url:'.$accountUrl);
-    $this->_accountUrl = $accountUrl;
-  }
-
-  /**
-   * Method to get an account URL name
-   *
-   * @return string The account
-   */
-  public function getAccountUrl()
-  {
-    $this->_logger->info(__METHOD__);
-    return $this->_accountUrl;
-  }
-
-  /**
-   * Method to set the type
-   *
-   * @param string $type The queue type
+   * @param string $type The queue name
    *
    * @return null
    */
-  public function setType($type)
+  public function setQueueName($queueName)
   {
     $this->_logger->info(__METHOD__);
-    $this->_logger->debug(__METHOD__.' type:'.$type);
-    $this->_type = $type;
-  }
-
-  /**
-   * Method to get the type
-   *
-   * @return string The type of this queue
-   */
-  public function getType()
-  {
-    $this->_logger->info(__METHOD__);
-    return $this->_type;
+    $this->_logger->debug(__METHOD__.' queueName:'.$queueName);
+    $this->_queueName = $queueName;
   }
 
   /**
@@ -149,10 +105,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
   public function getQueueName()
   {
     $this->_logger->info(__METHOD__);
-    if (!empty($this->_accountUrl) && !empty($this->_type)) {
-      return $this->_accountUrl.':'.$this->_type;
-    }
-    return null;
+    return $this->_queueName;
   }
 
   /**
@@ -163,7 +116,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
   public function getWaitingCount()
   {
       $this->_logger->info(__METHOD__);
-      $key = $this->_prefix.':queue:'.$this->getQueueName();
+      $key = $this->_prefix.':queue:'.$this->_queueName;
       $this->_logger->debug(__METHOD__.' key: '.$key);
       $count = $this->_redis->llen($key);
       return $count ? $count : 0;
@@ -177,7 +130,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
   public function getFailedCount()
   {
     $this->_logger->info(__METHOD__);
-    $count = $this->_redis->get($this->_prefix.':stat:failed:'.$this->getQueueName());
+    $count = $this->_redis->get($this->_prefix.':stat:failed:'.$this->_queueName);
     return $count ? $count : 0;
   }
 
@@ -189,7 +142,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
   public function getProcessedCount()
   {
     $this->_logger->info(__METHOD__);
-    $count = $this->_redis->get($this->_prefix.':stat:processed:'.$this->getQueueName());
+    $count = $this->_redis->get($this->_prefix.':stat:processed:'.$this->_queueName);
     return $count ? $count : 0;
   }
 
@@ -202,14 +155,12 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
   {
     $this->_logger->info(__METHOD__);
     $workers = $this->_redis->smembers($this->_prefix.':workers');
+    $this->_logger->debug(__METHOD__.' workers: '.print_r($workers, true));
     $pids = array();
     if ($workers) {
-      $thisQueueName = $this->getQueueName();
       foreach ($workers as $worker) {
         $parts = explode(':', $worker);
-        $this->_logger->debug(__METHOD__.' parts: '.print_r($parts, true));
-        $queueName = $parts[2].':'.$parts[3];
-        if ($queueName == $thisQueueName) {
+        if ($this->_queueName == $parts[2]) {
           $pids[] = $parts[1];
         }
       }
@@ -335,21 +286,18 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
    *
    * @return null
    */
-  public function addProcess($children=1, $sites='/var/www', $params=array())
+  public function addProcess($children=1, $params=array())
   {
     $this->_logger->info(__METHOD__);
-    $accountUrl = $this->getAccountUrl();
-    $type = $this->getType();
-    $path = $sites.'/'.$accountUrl.'/scripts/';
-    $paramsString = '{"queue":"'.$accountUrl.':'.$type.'", "count":"'.$children.'"';
+    $paramsString = '{"queue":"'.$this->_queueName.'", "count":"'.$children.'"';
     if ($params) {
       foreach ($params as $key => $value) {
         $paramsString.=',"'.$key.'":"'.$value.'"';
       }
     }
     $paramsString.= '"}';
-    $output = " > /dev/null 2>&1 &";
-    $cmd = "nohup php ".$path."script.php -s=Core_Scripts_ResqueWorker -p='".$paramsString."'".$output;
+    $output = Zend_Registry::get('job_script_output');
+    $cmd = "nohup php ".ROOT_PATH."/scripts/script.php -s=Core_Scripts_RresqueWorker -p='".$paramsString."'".$output;
     $this->_logger->debug(__METHOD__.' cmd: '.$cmd);
     return exec($cmd);
   }
@@ -370,7 +318,7 @@ class Core_Job_Admin_Queue extends Core_Job_Admin_Abstract
     $data = array();
     switch ($status) {
       case 'waiting':
-        $key = $this->_prefix.':queue:'.$this->getQueueName();
+        $key = $this->_prefix.':queue:'.$this->_queueName;
         if (strtolower($direction) == 'desc') {
           $n = $this->getWaitingCount();
           $start = $n - ($start + $length);

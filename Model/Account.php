@@ -26,7 +26,9 @@ class Core_Model_Account extends Core_Model
     array("deleted", "tinyint(3) unsigned", "NO", "", "0", ""),
     array("name", "varchar(255)", "NO", "", "", ""),
     array("organization_id", "int(10) unsigned", "NO", "MUL", "0", ""),
-    array("account_status", "int(10) unsigned", "NO", "MUL", "0", "")
+    array("account_status", "int(10) unsigned", "NO", "MUL", "0", ""),
+    array("public_key", "varchar(80)", "NO", "", "", ""),
+    array("secret_key", "varchar(80)", "NO", "", "", ""),
   );
 
 }
