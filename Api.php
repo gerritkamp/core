@@ -33,6 +33,10 @@ class Core_Api
     $publicKey = Zend_Registry::get('public_key');
     $params = json_encode($params, JSON_NUMERIC_CHECK);
     $hash = sha1($publicKey.$secretKey.$params);
+    $this->_logger->debug(__METHOD__.' secret: '.$secretKey);
+    $this->_logger->debug(__METHOD__.' public: '.$publicKey);
+    $this->_logger->debug(__METHOD__.' hash: '.$hash);
+    $this->_logger->debug(__METHOD__.' params: '.$params);
     return $hash;
   }
 
@@ -56,8 +60,14 @@ class Core_Api
       $submittedHash = $params['hash'];
       $params = json_encode($params['params'], JSON_NUMERIC_CHECK);
       $hash = sha1($publicKey.$secretKey.$params);
+      $this->_logger->debug(__METHOD__.' secret: '.$secretKey);
+      $this->_logger->debug(__METHOD__.' public: '.$publicKey);
+      $this->_logger->debug(__METHOD__.' hash: '.$hash);
+      $this->_logger->debug(__METHOD__.' params: '.$params);
       if ($submittedHash == $hash) {
         $valid = true;
+      } else {
+        $this->_logger->err(__METHOD__.' request not valid with params: '.print_r($params, true));
       }
     }
     return $valid;
