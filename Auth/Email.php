@@ -53,20 +53,25 @@ class Core_Auth_Email extends Core_Auth
           $password = $this->hashPassword($password, $userData['usersalt']);
           $updateData = array('password' => $password);
           $updated = $userModel->updateRecord($userData['id'], $updateData);
-          if ($updated && $logUserIn) {
-            $this->_login($userData['id']);
+          if ($updated) {
+            if ($logUserIn) {
+              $this->_login($userData['id']);
+            }
+            return true;
+          } else {
+            $this->_logger->err(__METHOD__.' could not update user data');
+            return false;
           }
-          return true;
         } else {
-          $this->_logger->warn(__METHOD__.' could not find user for token');
+          $this->_logger->err(__METHOD__.' could not find user for token');
           return false;
         }
       } else {
-        $this->_logger->warn(__METHOD__.' passwords are not equal');
+        $this->_logger->err(__METHOD__.' passwords are not equal');
         return false;
       }
     } else {
-      $this->_logger->warn(__METHOD__.' passwords did not pass regex pattern');
+      $this->_logger->err(__METHOD__.' passwords did not pass regex pattern');
       return false;
     }
   }
