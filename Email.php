@@ -183,7 +183,7 @@ class Core_Email
     foreach ($to as $index => $user) {
       $this->_logger->debug(__METHOD__.' to: '.print_r($to, true));
       if (!empty($user['email'])) {
-        if (substr($user['email'], 0, 5) == 'xtest+') {
+        if (substr($user['email'], 0, 5) == 'test+') {
           $this->_logger->notice(__METHOD__.' not sending to test email: '.print_r($to[$index], true));
           unset($to[$index]);
         }
