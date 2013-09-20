@@ -28,11 +28,11 @@ class Core_Deploy_VirtualHost
    */
   protected $_template = '
     <VirtualHost *:80>
-      ServerName #name.myvirtualmentor.com
-      Redirect permanent / https://#name.myvirtualmentor.com/
+      ServerName #name.#domain
+      Redirect permanent / https://#name.#domain/
     </VirtualHost>
     <VirtualHost *:443>
-      ServerName #name.myvirtualmentor.com
+      ServerName #name.#domain
       DocumentRoot /var/www/#url
       ErrorLog /var/log/apache2/#url.error.log
       CustomLog /var/log/apache2/#url.access.log combined
@@ -42,13 +42,6 @@ class Core_Deploy_VirtualHost
       SSLEngine On
       SSLCertificateFile /etc/apache2/ssl/apache.crt
       SSLCertificateKeyFile /etc/apache2/ssl/apache.key
-      <Directory /var/www/>
-        RewriteEngine On
-        Options Indexes FollowSymLinks MultiViews
-        AllowOverride All
-        Order allow,deny
-        allow from all
-      </Directory>
     </VirtualHost>';
 
   /**
@@ -69,7 +62,7 @@ class Core_Deploy_VirtualHost
    *
    * @return array Default status array
    */
-  public function addNewVirtualHost($url, $environment, $sites)
+  public function addNewVirtualHost($url, $environment, $sites, $domain)
   {
     $this->_logger->info(__METHOD__);
     // create config
@@ -83,6 +76,7 @@ class Core_Deploy_VirtualHost
     $config = str_replace('#name', $name, $config);
     $config = str_replace('#url', $url, $config);
     $config = str_replace('#sites', $sites, $config);
+    $config = str_replace('#domain', $domain, $config);
     $return['status'] = 'success';
     // write config
     $filename = '/etc/apache2/sites-available/'.$url;
