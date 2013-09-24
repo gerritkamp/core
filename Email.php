@@ -78,6 +78,9 @@ class Core_Email
       case 'all-mail':
         $n = $this->_sendAllMail($type, $to, $params, $subject, $from, $bulk, $attachments);
         break;
+      case 'mandrill':
+        $n = $this->_sendMandrillMail($type, $to, $params, $subject, $from, $bulk, $attachments);
+        break;
     }
     $this->_logger->info(__METHOD__.' '.$n.' emails sent!');
     return $n;
@@ -151,6 +154,72 @@ class Core_Email
       }
       return count($to);
     }
+  }
+
+  /**
+   * Method to send email using the Mandrill API
+   *
+   * @param string  $type        The email type
+   * @param array   $to          Array with people[name, email]
+   * @param array   $params      Array with parameters that are needed to generate the email body
+   * @param array   $subject     Array with the email subjects
+   * @param array   $from        Array with the from-details
+   * @param boolean $bulk        If false (=default), a unique email is created for each user.
+   * @param array   $attachments If given, the path to files that should be attached
+   *
+   * @return
+   */
+  protected function _sendMandrillMail($type, $to, $params, $subject, $from, $bulk, $attachments)
+  {
+    $this->_logger->info(__METHOD__);
+    $config = Zend_Registry::get('config');
+    $this->_logger->debug(__METHOD__.' got config');
+    $key = $config->mandrill->key;
+    $this->_logger->debug(__METHOD__.' got key: '.$key);
+    //try {
+      $mandrill = new Mandrill($key);
+      $this->_logger->debug(__METHOD__.' created mandrill');
+      $message = array(
+        'html' => $this->_createBody($type, $params),
+        'subject' => $subject,
+        'from_email' => $from['email'],
+        'from_name' => $from['name'],
+        'to' => $to,
+        'headers' => array('Reply-To' => $from['email']),
+        'important' => false,
+        'track_opens' => null,
+        'track_clicks' => null,
+        'auto_text' => null,
+        'auto_html' => null,
+        'inline_css' => null,
+        'url_strip_qs' => null,
+        'preserve_recipients' => null,
+        'view_content_link' => null,
+        'tracking_domain' => null,
+        'signing_domain' => null,
+        'return_path_domain' => null,
+        'merge' => true,
+        'tags' => array($type),
+      );
+      $this->_logger->debug(__METHOD__.' message: '.print_r($message, true));
+      if ($attachments) {
+        foreach ($attachments as $attachment) {
+          $fileParts = pathinfo($attachment);
+          $message['attachments'][] = array(
+            'type' => $this->_getMimeType($fileParts['extension']),
+            'name' => $fileParts['filename'],
+            'content' => file_get_contents($attachment)
+          );
+        }
+      }
+      $async = false;
+      $result = $mandrill->messages->send($message, $async);
+      $this->_logger->debug(__METHOD__.print_r($result, true));
+      return count($to);
+    //} catch(Mandrill_Error $e) {
+        // Mandrill errors are thrown as exceptions
+    //    $this->_logger->err(__METHOD__.' Mandrill error: '.get_class($e).'-'.$e->getMessage());
+    //}
   }
 
   /**
