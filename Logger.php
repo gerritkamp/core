@@ -40,11 +40,11 @@ class Core_Logger extends Zend_Log
       foreach ($this->_logWriters as $writer) {
         switch ($writer) {
           case 'file':
-            $now = time();
-            $format = date('H:i:s').' %priorityName% %message% '.PHP_EOL;
+            $format = '%priorityName% %message% '.PHP_EOL;
             $formatter = new Zend_Log_Formatter_Simple($format);
             $file = ROOT_PATH.'/logs/'.date('Y-m-d').'.log';
             $writer = new Zend_Log_Writer_Stream($file);
+            $writer->setFormatter($formatter);
             $this->addWriter($writer);
           break;
           case 'firebug':
@@ -74,6 +74,8 @@ class Core_Logger extends Zend_Log
    */
   protected function _writeMessage($message, $priority)
   {
+    $now = substr(number_format((microtime(true)-time()), 3), 1);
+    $message = date('H:i:s').$now.' '.$message;
     if ($this->_maxPriority >= $priority) {
       if (in_array('firebug', $this->_logWriters)) {
         $request = new Zend_Controller_Request_Http();

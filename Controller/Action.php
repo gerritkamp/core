@@ -51,7 +51,8 @@ class Core_Controller_Action extends Zend_Controller_Action
     // check for flash message
     if (!empty($this->_session->flashMessage)) {
       $this->view->flashMessage = $this->_session->flashMessage;
-      $this->_session->flashMessage = null;
+      $this->_logger->debug(__METHOD__.' flash message: '.$this->_session->flashMessage);
+      //$this->_session->flashMessage = null;
     }
 
     $this->view->controller = $request->getControllerName();

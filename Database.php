@@ -471,6 +471,7 @@ class Core_Database
    */
   public function importSqlFile($file, $exec)
   {
+    $this->_logger->info(__METHOD__);
     $sql = file_get_contents($file);
     if ($exec) {
       try {

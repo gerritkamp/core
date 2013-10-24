@@ -33,13 +33,13 @@ class Core_Tools_HostUrl
     $protocal = $https ? 'https://' : 'http://';
     if ($useAccount) {
       if (empty($account)) {
-        $account = $config->account;
+        $account = $config->account.'.';
       }
     } else {
       $account = '';
     }
     $domain = $config->domain;
-    $subdomain = (APPLICATION_ENV == 'production') ? '.' : '.'.APPLICATION_ENV.'.';
+    $subdomain = (APPLICATION_ENV == 'production') ? '' : APPLICATION_ENV.'.';
     $hostUrl = $protocal.$account.$subdomain.$domain.'/';
     return $hostUrl;
   }

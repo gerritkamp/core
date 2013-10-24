@@ -128,6 +128,10 @@ class Core_Acl
               // for each role the user has, check if its granted, and if it should be shown
               if (in_array($roleId, $roles) && $grant==1 && $options['show'][$roleId] == 1) {
                 $menu[$controller][$action] = 1;
+              } elseif (in_array($roleId, $roles) && $grant==1 && $options['show'][$roleId] == 2) {
+                if ($this->_checkSpecialAccess($roles, $controller, $action, $params)) {
+                  $menu[$controller][$action] = 1;
+                }
               }
             }
           }

@@ -120,6 +120,9 @@ class Core_Model_User extends Core_Model_Person
     $this->_logger->debug(__METHOD__.' token: '.print_r($token, true));
     $select = $this->_readDb->select()
        ->from(array('u' => 'core_user'))
+       ->joinLeft(array('ep' => 'core_email_person'),
+          'u.id = ep.person_id AND ep.is_default=1',
+          array('email'))
        ->where('u.token = ?', $token);
     $this->_logger->debug(__METHOD__.' sql: '.print_r($select->__toString(), true));
     $results = $this->_readDb->query($select)->fetchAll();
