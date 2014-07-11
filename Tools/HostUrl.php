@@ -30,7 +30,7 @@ class Core_Tools_HostUrl
   public static function getHostUrl($https=false, $useAccount=false, $account='')
   {
     $config = Zend_Registry::get('config');
-    $protocal = $https ? 'https://' : 'http://';
+    $protocol = (APPLICATION_ENV == 'production') ? 'https://' : 'http://';
     if ($useAccount) {
       if (empty($account)) {
         $account = $config->account.'.';
@@ -39,8 +39,7 @@ class Core_Tools_HostUrl
       $account = '';
     }
     $domain = $config->domain;
-    $subdomain = (APPLICATION_ENV == 'production') ? '' : APPLICATION_ENV.'.';
-    $hostUrl = $protocal.$account.$subdomain.$domain.'/';
+    $hostUrl = $protocol.$account.$domain.'/';
     return $hostUrl;
   }
 

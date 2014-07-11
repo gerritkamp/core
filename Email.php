@@ -182,7 +182,7 @@ class Core_Email
       $message = array(
         'html' => $this->_createBody($type, $params),
         'subject' => $subject,
-        'from_email' => $from['email'],
+        'from_email' => 'no-reply@virtualmentor.co', // must do this because of DMARC rules of AOL
         'from_name' => $from['name'],
         'to' => $to,
         'headers' => array('Reply-To' => $from['email']),
