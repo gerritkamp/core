@@ -85,7 +85,7 @@ class Core_Api
    */
   public function sendMessage($url, $params, $method='POST', $format="json")
   {
-    $this->_logger->info(__METHOD__);
+    $this->_logger->info(__METHOD__.' method: '.$method);
     $hash = $this->createMessageHash($params);
     $return['status'] = 'error';
     try {
