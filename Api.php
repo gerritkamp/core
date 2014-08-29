@@ -113,7 +113,9 @@ class Core_Api
           $client->setParameterPost($params);
           break;
       }
+      $this->_logger->info(__METHOD__.' sending request..');
       $response = $client->request();
+      $this->_logger->info(__METHOD__.' got response..');
       if ($response->isError()) {
         $this->_logger->err(__METHOD__.' status: '.$response->getStatus().
           ' error: '.$response->getMessage());
