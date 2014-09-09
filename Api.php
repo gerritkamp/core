@@ -106,7 +106,8 @@ class Core_Api
             CURLOPT_URL => $url. (strpos($url, '?') === FALSE ? '?' : ''). http_build_query($params),
             CURLOPT_HEADER => 0,
             CURLOPT_RETURNTRANSFER => TRUE,
-            CURLOPT_TIMEOUT => 4
+            CURLOPT_TIMEOUT => 4,
+            CURLOPT_SSL_VERIFYPEER => false
           );
           break;
         case 'post':
@@ -119,6 +120,7 @@ class Core_Api
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_FORBID_REUSE => 1,
             CURLOPT_TIMEOUT => 4,
+            CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_POSTFIELDS => http_build_query($params)
           );
           break;
