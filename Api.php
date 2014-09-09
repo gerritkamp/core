@@ -135,7 +135,7 @@ class Core_Api
       $this->_logger->info(__METHOD__.' sending request..');
       if( ! $results = curl_exec($ch)) {
         // logging
-        $this->_logger->error(__METHOD__.print_r(curl_errno($ch), true));
+        $this->_logger->err(__METHOD__.print_r(curl_errno($ch), true));
         trigger_error(curl_error($ch));
       }
       $this->_logger->info(__METHOD__.' got response..');
