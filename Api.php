@@ -75,6 +75,7 @@ class Core_Api
 
   /**
    * Method to send a request and return the response
+   * @todo - replace the Zend_Http_Client with something else, see if that is faster.
    *
    * @param string $url    The url to call
    * @param array  $params The params to send along
@@ -83,7 +84,81 @@ class Core_Api
    *
    * @return results array
    */
-  public function sendMessage($url, $params, $method='POST', $format="json")
+  public function sendMessage($url, $params, $method='POST', $format="json") {
+    $this->_logger->info(__METHOD__.' method: '.$method);
+    $hash = $this->createMessageHash($params);
+    $return['status'] = 'error';
+    try {
+      switch ($format) {
+        case 'xml':
+          //@todo add and test xml endecoding
+          break;
+        case 'json':
+        default:
+          $params = array('params' => $params);
+          break;
+      }
+      $params['hash'] = $hash;
+      $params['key'] = Zend_Registry::get('public_key');
+      switch (strtolower($method)) {
+        case 'get':
+          $options = array(
+            CURLOPT_URL => $url. (strpos($url, '?') === FALSE ? '?' : ''). http_build_query($params),
+            CURLOPT_HEADER => 0,
+            CURLOPT_RETURNTRANSFER => TRUE,
+            CURLOPT_TIMEOUT => 4
+          );
+          break;
+        case 'post':
+        default:
+          $options = array(
+            CURLOPT_POST => 1,
+            CURLOPT_HEADER => 0,
+            CURLOPT_URL => $url,
+            CURLOPT_FRESH_CONNECT => 1,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_FORBID_REUSE => 1,
+            CURLOPT_TIMEOUT => 4,
+            CURLOPT_POSTFIELDS => http_build_query($params)
+          );
+          break;
+      }
+      $ch = curl_init();
+      curl_setopt_array($ch, $options);
+      $this->_logger->info(__METHOD__.' sending request..');
+      if( ! $results = curl_exec($ch)) {
+          trigger_error(curl_error($ch));
+      }
+      $this->_logger->info(__METHOD__.' got response..');
+      curl_close($ch);
+      switch ($format) {
+        case 'xml':
+          //@todo add and test xml decoding
+          break;
+        case 'json':
+        default:
+          $return = json_decode($results, true);
+          break;
+      }
+    } catch (Exception $e) {
+      $this->_logger->err(__METHOD__.' error: '.$e->getMessage());
+    }
+
+    return $return;
+  }
+
+  /**
+   * Method to send a request and return the response
+   * @todo - replace the Zend_Http_Client with something else, see if that is faster.
+   *
+   * @param string $url    The url to call
+   * @param array  $params The params to send along
+   * @param string $method The method. Default is POST
+   * @param string $format The format. Default is json
+   *
+   * @return results array
+   */
+  public function sendMessageOld($url, $params, $method='POST', $format="json")
   {
     $this->_logger->info(__METHOD__.' method: '.$method);
     $hash = $this->createMessageHash($params);
