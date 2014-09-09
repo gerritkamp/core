@@ -127,6 +127,11 @@ class Core_Api
       }
       $ch = curl_init();
       curl_setopt_array($ch, $options);
+      // logging, temp
+      curl_setopt($ch, CURLOPT_VERBOSE, true);
+      $verbose = fopen('/opt/tmp/curl_log.txt', 'rw+');
+      curl_setopt($curlHandle, CURLOPT_STDERR, $verbose);
+
       $this->_logger->info(__METHOD__.' sending request..');
       if( ! $results = curl_exec($ch)) {
           trigger_error(curl_error($ch));
