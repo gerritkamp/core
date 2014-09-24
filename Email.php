@@ -205,10 +205,11 @@ class Core_Email
       if ($attachments) {
         foreach ($attachments as $attachment) {
           $fileParts = pathinfo($attachment);
+          $content = file_get_contents($attachment);
           $message['attachments'][] = array(
             'type' => $this->_getMimeType($fileParts['extension']),
             'name' => $fileParts['filename'],
-            'content' => file_get_contents($attachment)
+            'content' => base64_encode($content)
           );
         }
       }
