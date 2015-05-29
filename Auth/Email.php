@@ -40,12 +40,8 @@ class Core_Auth_Email extends Core_Auth
   {
     $this->_logger->debug(__METHOD__);
     // check for valid password
-    $numbers  = preg_match('@[0-9]@', $password);
-    $letters = preg_match('@([a-zA-Z]{6,}[a-zA-Z]*)@', $password);
-    /*$this->_logger->debug(__METHOD__.' password: '.$password);
-    $this->_logger->debug(__METHOD__.' numbers: '.$numbers);
-    $this->_logger->debug(__METHOD__.' letters: '.$letters);*/
-    if ($numbers && $letters) {
+    $length  = strlen($password);
+    if ($length > 5) {
       if ($password === $confirm) {
         $userModel = new Core_Model_User();
         $userData = $userModel->getUserByToken($token);
