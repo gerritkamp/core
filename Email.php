@@ -81,6 +81,9 @@ class Core_Email
       case 'mandrill':
         $n = $this->_sendMandrillMail($type, $to, $params, $subject, $from, $bulk, $attachments);
         break;
+      case 'sendgrid':
+        $n = $this->_sendSendgridEmail($type, $to, $params, $subject, $from, $bulk, $attachments);
+        break;
     }
     $this->_logger->info(__METHOD__.' '.$n.' emails sent!');
     return $n;
@@ -154,6 +157,57 @@ class Core_Email
       }
       return count($to);
     }
+  }
+
+  /**
+   * Method to send email using the Sendgrid API
+   *
+   * @param string  $type        The email type
+   * @param array   $to          Array with people[name, email]
+   * @param array   $params      Array with parameters that are needed to generate the email body
+   * @param array   $subject     Array with the email subjects
+   * @param array   $from        Array with the from-details
+   * @param boolean $bulk        If false (=default), a unique email is created for each user.
+   * @param array   $attachments If given, the path to files that should be attached
+   *
+   * @return
+   */
+  protected function _sendSendgridEmail($type, $to, $params, $subject, $from, $bulk, $attachments)
+  {
+    $this->_logger->info(__METHOD__);
+    $config = Zend_Registry::get('config');
+    $this->_logger->debug(__METHOD__.' got config');
+    $key = $config->sendgrid->key;
+    $this->_logger->debug(__METHOD__.' got key: '.$key);
+
+    $sendgrid = new SendGrid($key);
+    $this->_logger->debug(__METHOD__.' created sendgrid');
+    $email = new SendGrid\Email();
+    $email
+        ->setFrom('no-reply@virtualmentor.co')
+        ->setSubject($subject)
+        ->setHtml($this->_createBody($type, $params))
+        ->addHeader('Reply-To', $from['email'])
+    ;
+    foreach ($to as $toRecord) {
+      $email->addTo($toRecord['email'], $toRecord['name']);
+    }
+
+    $this->_logger->debug(__METHOD__.' message: '.print_r($message, true));
+    if ($attachments) {
+      $email->setAttachments($attachments);
+    }
+
+    try {
+      $result = $sendgrid->send($email);
+      $this->_logger->debug(__METHOD__.print_r($result, true));
+    } catch(\SendGrid\Exception $e) {
+      print_r($e->getCode(), true);
+      foreach($e->getErrors() as $er) {
+        print_r($er, true);
+      }
+    }
+    return count($to);
   }
 
   /**
